@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HEALTH MATE PRO</title>
+
+  <style>
+    :root {
+      --neon-cyan: #00fffb;
+      --neon-pink: #ff004c;
+      --bg-color: #050505;
+      --card-bg: rgba(255,255,255,0.07);
+      --text-color: #ffffff;
+      --muted: #9aa4b2;
+      --line: #2a2a2a;
+      --good: #39d98a;
+      --warn: #ffb020;
+      --bad: #ff5c7a;
+    }
+
+    body.light-mode {
+      --bg-color: #f4f7f6;
+      --card-bg: rgba(0,0,0,0.06);
+      --text-color: #101828;
+      --muted: #667085;
+      --line: #d0d5dd;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: Pretendard, Arial, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      transition: 0.25s;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      z-index: 10000;
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      color: var(--text-color);
+      padding: 10px 15px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(10px);
+    }
+
+    .user-id-fixed {
+      position: fixed;
+      bottom: 15px;
+      right: 20px;
+      z-index: 10000;
+      font-size: 12px;
+      font-family: monospace;
+      color: #777;
+      letter-spacing: 1px;
+    }
+
+    .screen {
+      position: absolute;
+      width: 100%;
+      height: 100vh;
+      transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(10px);
+    }
+
+    #home-screen {
+      background: radial-gradient(circle at center, var(--bg-color) 0%, #000 100%);
+    }
+
+    .logo-img {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      border: 3px solid var(--neon-cyan);
+      box-shadow: 0 0 30px var(--neon-cyan);
+      margin-bottom: 25px;
+      object-fit: cover;
+      background: #111;
+    }
+
+    h1.brand-name {
+      font-size: 55px;
+      font-weight: 900;
+      margin: 0 0 45px 0;
+      background: linear-gradient(to bottom, #fff, #999);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      width: 100%;
+      max-width: 760px;
+      padding: 0 20px;
+    }
+
+    .nav-card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      padding: 35px;
+      border-radius: 22px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.25s;
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-card:hover {
+      border-color: var(--neon-cyan);
+      transform: translateY(-7px);
+    }
+
+    .nav-card p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 0;
+    }
+
+    .mode-container {
+      display: flex;
+      gap: 30px;
+      width: 100%;
+      max-width: 900px;
+      padding: 0 20px;
+    }
+
+    .mode-card {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      padding: 45px 30px;
+      border-radius: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+
+    .mode-card:hover { border-color: var(--neon-pink); }
+
+    .mode-card h3 {
+      color: var(--neon-cyan);
+      margin-bottom: 15px;
+      font-size: 26px;
+    }
+
+    .mode-card ul {
+      text-align: left;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-top: 15px;
+      padding-left: 20px;
+    }
+
+    #app-screen {
+      justify-content: flex-start;
+      background: var(--bg-color);
+    }
+
+    #app-header {
+      width: 100%;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      background: var(--bg-color);
+      border-bottom: 1px solid var(--line);
+      position: fixed;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .back-nav-btn {
+      background: #222;
+      border: 1px solid #555;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .back-nav-btn:hover { background: var(--neon-pink); }
+
+    .main-container {
+      display: flex;
+      width: 100%;
+      height: calc(100vh - 132px);
+      padding: 78px 18px 74px;
+      gap: 18px;
+    }
+
+    .left-column {
+      width: 44%;
+      min-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .right-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 520px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+
+    .card.pad { padding: 14px; }
+
+    .view-pane {
+      flex: 1;
+      min-height: 360px;
+      position: relative;
+      border-radius: 22px;
+      background: #000;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    #canvasStage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+
+    #video,
+    #canvas,
+    #overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    #overlay { pointer-events: none; }
+
+    .data-overlay {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      z-index: 10;
+      background: rgba(0,0,0,0.72);
+      padding: 16px;
+      border-radius: 15px;
+      border-left: 5px solid var(--neon-pink);
+      min-width: 160px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #999;
+      letter-spacing: 1px;
+    }
+
+    .stat-val {
+      font-size: 30px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      margin: 4px 0 10px;
+    }
+
+    .tiny-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tiny-row button,
+    .tiny-row select,
+    .tiny-row input {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-color);
+    }
+
+    .tiny-row button {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .tiny-row button:hover {
+      border-color: var(--neon-cyan);
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .control-group {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+    }
+
+    .control-group h4 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--neon-cyan);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .field input,
+    .field select {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-color);
+    }
+
+    .radio-line,
+    .check-line {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .radio-line label,
+    .check-line label {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    #threeWrap {
+      width: 100%;
+      flex: 1;
+      min-height: 290px;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #0d0d0d;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .feedback-box {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .feedback-main {
+      font-size: 28px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    .feedback-detail {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(130px, 1fr));
+      gap: 12px;
+    }
+
+    .metric-card {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .metric-card .k {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .metric-card .v {
+      font-size: 28px;
+      font-weight: 900;
+      margin-top: 8px;
+    }
+
+    #info {
+      margin: 0;
+      height: 180px;
+      overflow: auto;
+      background: #0f0f10;
+      color: #9ef;
+      padding: 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      line-height: 1.5;
+      border: 1px solid var(--line);
+    }
+
+    .footer-ctrl {
+      width: 100%;
+      padding: 14px 20px;
+      background: var(--bg-color);
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      position: fixed;
+      bottom: 0;
+      z-index: 1000;
+      flex-wrap: wrap;
+    }
+
+    .save-btn,
+    .action-btn {
+      padding: 12px 28px;
+      border: none;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .save-btn {
+      background: var(--neon-cyan);
+      color: #000;
+    }
+
+    .action-btn {
+      background: rgba(255,255,255,0.1);
+      color: var(--text-color);
+      border: 1px solid var(--line);
+    }
+
+    @media (max-width: 1280px) {
+      .main-container {
+        flex-direction: column;
+        overflow: auto;
+        height: calc(100vh - 132px);
+      }
+
+      .left-column,
+      .right-column {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+      }
+
+      .control-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" id="themeToggle">
+    <span id="theme-icon">🌙</span>
+    <span id="theme-text">DARK MODE</span>
+  </button>
+
+  <div class="user-id-fixed">STUDENT ID: 2025730082</div>
+
+  <div id="home-screen" class="screen">
+    <img src="/healthmate_logo.png" alt="Logo" class="logo-img" />
+    <h1 class="brand-name">HEALTH MATE</h1>
+    <div class="menu-grid">
+      <div class="nav-card" id="goModeBtn">
+        <div style="font-size:35px;">⚡</div>
+        <h3>AI 실시간 분석</h3>
+        <p>YOLO ONNX + Hands + 3D 아바타 기반으로 스쿼트 동작을 실시간 추적합니다.</p>
+      </div>
+      <div class="nav-card" id="showGuideBtn">
+        <div style="font-size:35px;">📖</div>
+        <h3>운동 시스템 보기</h3>
+        <p>영상 입력, 자세 분석, 실시간 피드백, DB 저장 흐름을 발표용 화면으로 확인합니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="mode-screen" class="screen hidden">
+    <h2 style="margin-bottom:50px; font-size:34px; font-weight:900;">SELECT INPUT MODE</h2>
+    <div class="mode-container">
+      <div class="mode-card" data-mode="webcam">
+        <h3>📷 실시간 웹캠 분석</h3>
+        <ul>
+          <li>웹캠 + YOLO ONNX 실시간 추론</li>
+          <li>MediaPipe Hands 오버레이</li>
+          <li>실시간 피드백 + 3D 아바타 표시</li>
+        </ul>
+      </div>
+      <div class="mode-card" data-mode="json">
+        <h3>🎬 JSON / Video 분석</h3>
+        <ul>
+          <li>squat.mp4 + pose_squat.json 동기화</li>
+          <li>발표용 안정 재생</li>
+          <li>세트/횟수/깊이 분석 표시</li>
+        </ul>
+      </div>
+    </div>
+    <button id="goHomeBtn" style="margin-top:40px; background:none; border:none; color:#666; cursor:pointer; text-decoration:underline;">BACK TO MAIN</button>
+  </div>
+
+  <div id="app-screen" class="screen hidden">
+    <header id="app-header">
+      <button class="back-nav-btn" id="backToModeBtn">← BACK</button>
+      <div style="color:var(--neon-cyan); font-weight:900; margin-left:20px;">HEALTH MATE PRO ENGINE</div>
+    </header>
+
+    <div class="main-container">
+      <div class="left-column">
+        <div class="view-pane">
+          <div class="data-overlay">
+            <div class="stat-label">COUNT</div>
+            <div id="count-val" class="stat-val">0</div>
+            <div class="stat-label">PROGRESS</div>
+            <div id="progress-val" class="stat-val">0%</div>
+            <div class="stat-label">SET</div>
+            <div id="set-val" class="stat-val" style="font-size:22px;">1 / 3</div>
+          </div>
+
+          <div id="canvasStage">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="canvas"></canvas>
+            <canvas id="overlay"></canvas>
+          </div>
+        </div>
+
+        <div class="card pad">
+          <div class="control-grid">
+            <div class="control-group">
+              <h4>입력 / 운동 모드</h4>
+              <div class="radio-line">
+                <label><input type="radio" name="inputMode" value="json"> JSON</label>
+                <label><input type="radio" name="inputMode" value="webcam"> Webcam</label>
+              </div>
+              <div class="radio-line">
+                <label><input type="radio" name="workoutMode" value="normal" checked> Normal</label>
+                <label><input type="radio" name="workoutMode" value="challenge"> Challenge</label>
+              </div>
+              <div style="font-size:12px; color:var(--muted); line-height:1.5;">
+                Normal: 세트/횟수 목표 진행<br>
+                Challenge: 멈출 때까지 연속 진행
+              </div>
+            </div>
+
+            <div class="control-group">
+              <h4>세트 설정</h4>
+              <label class="field">세트 수
+                <input id="targetSets" type="number" min="1" max="20" value="3">
+              </label>
+              <label class="field">세트당 횟수
+                <input id="setRepTarget" type="number" min="1" max="100" value="10">
+              </label>
+              <label class="field">휴식(초)
+                <input id="restSeconds" type="number" min="0" max="600" value="30">
+              </label>
+            </div>
+
+            <div class="control-group">
+              <h4>장면 / 분석 옵션</h4>
+              <div class="check-line">
+                <label><input id="autoRotate" type="checkbox"> 자동 회전</label>
+                <label><input id="handOverlayToggle" type="checkbox" checked> 손 랜드마크 표시</label>
+              </div>
+              <div class="tiny-row">
+                <button id="prepareBtn">준비하기</button>
+                <button id="resetBtn">초기화</button>
+                <button id="resetBaselineBtn">기준 리셋</button>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <h4>파일 / 모델 경로</h4>
+              <div style="font-size:12px; color:var(--muted); line-height:1.7;">
+                Video: <code>/squat.mp4</code><br>
+                JSON: <code>/pose_squat.json</code><br>
+                YOLO: <code>/models/yolo_pose.onnx</code><br>
+                Hands: <code>/models/hand_landmarker.task</code><br>
+                Avatar: <code>/models/Untitled_squat.glb</code><br>
+                Gym: <code>/models/Untitled_gym.glb</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-column">
+        <div class="card pad" style="display:flex; flex-direction:column; gap:14px; flex:1;">
+          <div class="status-bar">
+            <span id="analysisStatus">Ready</span>
+            <span id="saveStatus">저장 대기</span>
+          </div>
+
+          <div id="threeWrap"></div>
+
+          <div class="feedback-box">
+            <div id="feedbackMain" class="feedback-main">대기 중</div>
+            <div id="feedbackDetail" class="feedback-detail">모드를 선택하고 준비하기를 누르세요.</div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="k">입력 모드</div>
+              <div class="v" id="cardInputMode">JSON</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">운동 모드</div>
+              <div class="v" id="cardMode">Normal</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">평균 깊이</div>
+              <div class="v" id="cardAvgDepth">0.000</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">현재 세트</div>
+              <div class="v" id="cardSet">1 / 3</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">세트 횟수</div>
+              <div class="v" id="cardSetRep">0 / 10</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">휴식</div>
+              <div class="v" id="cardRest">-</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">깊이 부족</div>
+              <div class="v" id="cardDepthLow">0</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">상체 경고</div>
+              <div class="v" id="cardTorsoWarn">0</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">최근 속도</div>
+              <div class="v" id="cardSpeed">대기</div>
+            </div>
+            <div class="metric-card">
+              <div class="k">반복 시간</div>
+              <div class="v" id="cardRepTime">0.00s</div>
+            </div>
+          </div>
+
+          <pre id="info">(no data)</pre>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer-ctrl">
+      <button class="action-btn" id="runBtn">시작</button>
+      <button class="save-btn" id="saveResult">STORE SESSION TO DB</button>
+    </footer>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
