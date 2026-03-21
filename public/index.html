@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEALTH MATE PRO - KST Time Fixed</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite/dist/tf-tflite.min.js"></script>
+    
+    <style>
+        :root { 
+            --neon-cyan: #00FFFB; 
+            --neon-pink: #ff004c; 
+            --bg-color: #050505; 
+            --card-bg: rgba(255,255,255,0.07); 
+            --text-color: #ffffff;
+        }
+
+        body.light-mode {
+            --bg-color: #f4f7f6;
+            --card-bg: rgba(0,0,0,0.06);
+            --text-color: #1a1a2e;
+        }
+
+        body { 
+            margin: 0; background: var(--bg-color); color: var(--text-color); 
+            font-family: 'Pretendard', sans-serif; overflow: hidden; height: 100vh; 
+            display: flex; flex-direction: column; transition: 0.3s;
+        }
+
+        /* [UI] 우측 상단 다크모드 토글 */
+        .theme-toggle {
+            position: fixed; top: 15px; right: 15px; z-index: 10000;
+            background: var(--card-bg); border: 1px solid #444; color: var(--text-color);
+            padding: 10px 15px; border-radius: 12px; cursor: pointer; font-size: 13px;
+            font-weight: bold; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px);
+        }
+
+        /* [UI] 우측 하단 학번 표시 */
+        .user-id-fixed {
+            position: fixed; bottom: 15px; right: 20px; z-index: 10000;
+            font-size: 12px; font-family: monospace; color: #777; letter-spacing: 1px;
+        }
+
+        .screen { 
+            position: absolute; width: 100%; height: 100vh; 
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        }
+
+        .hidden { opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(10px); }
+
+        /* [1] 홈 화면 */
+        #home-screen { background: radial-gradient(circle at center, var(--bg-color) 0%, #000 100%); }
+        .logo-img { width: 220px; height: 220px; border-radius: 50%; border: 3px solid var(--neon-cyan); box-shadow: 0 0 30px var(--neon-cyan); margin-bottom: 25px; }
+        h1.brand-name { font-size: 55px; font-weight: 900; margin: 0 0 45px 0; background: linear-gradient(to bottom, #fff, #999); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 100%; max-width: 700px; padding: 0 20px; box-sizing: border-box; }
+        .nav-card { background: var(--card-bg); border: 1px solid #333; padding: 35px; border-radius: 22px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .nav-card:hover { border-color: var(--neon-cyan); transform: translateY(-7px); }
+
+        /* [2] 모드 선택 상세 설명 */
+        .mode-container { display: flex; gap: 30px; width: 100%; max-width: 850px; }
+        .mode-card { flex: 1; background: var(--card-bg); border: 1px solid #444; padding: 45px 30px; border-radius: 28px; text-align: center; cursor: pointer; }
+        .mode-card:hover { border-color: var(--neon-pink); }
+        .mode-card h3 { color: var(--neon-cyan); margin-bottom: 15px; }
+        .mode-card ul { text-align: left; font-size: 13px; color: #999; line-height: 1.8; margin-top: 15px; }
+
+        /* [3] 분석 실행 화면 */
+        #app-header { 
+            width: 100%; padding: 15px 30px; display: flex; justify-content: flex-start; align-items: center; 
+            background: var(--bg-color); border-bottom: 1px solid #333; position: fixed; top: 0; z-index: 1000; 
+        }
+        .back-nav-btn { background: #222; border: 1px solid #555; color: white; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .back-nav-btn:hover { background: var(--neon-pink); }
+
+        .main-container { display: flex; flex: 1; width: 100%; padding: 85px 20px 95px 20px; gap: 20px; box-sizing: border-box; }
+        .view-pane { flex: 1; position: relative; border-radius: 22px; background: #000; border: 1px solid #333; overflow: hidden; }
+        video, canvas { position: absolute; width: 100%; height: 100%; object-fit: contain; }
+        
+        .data-overlay { position: absolute; top: 20px; left: 20px; z-index: 100; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 15px; border-left: 5px solid var(--neon-pink); }
+        .stat-val { font-size: 30px; font-weight: 900; color: var(--neon-cyan); margin-bottom: 12px; }
+
+        .footer-ctrl { width: 100%; padding: 20px; background: var(--bg-color); display: flex; justify-content: center; border-top: 1px solid #333; position: fixed; bottom: 0; }
+        .save-btn { padding: 13px 80px; border: none; border-radius: 40px; background: var(--neon-cyan); color: #000; font-weight: 900; font-size: 17px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <button class="theme-toggle" onclick="window.toggleTheme()">
+        <span id="theme-icon">🌙</span> <span id="theme-text">DARK MODE</span>
+    </button>
+
+    <div class="user-id-fixed">STUDENT ID: 2025730082</div>
+
+    <div id="home-screen" class="screen">
+        <img src="healthmate_logo.png" alt="Logo" class="logo-img">
+        <h1 class="brand-name">HEALTH MATE</h1>
+        <div class="menu-grid">
+            <div class="nav-card" onclick="window.showModeSelect()">
+                <div style="font-size: 35px;">⚡</div>
+                <h3>AI 실시간 분석</h3>
+                <p>YOLOv8 Pose Estimation 기반으로 당신의 신체 밸런스를 실시간 추적합니다.</p>
+            </div>
+            <div class="nav-card" onclick="alert('가이드 준비 중!')">
+                <div style="font-size: 35px;">📖</div>
+                <h3>운동 동작 보기</h3>
+                <p>전문 트레이너의 자세를 3D 공간에서 마우스로 회전하며 확인하세요.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="mode-screen" class="screen hidden">
+        <h2 style="margin-bottom: 50px; font-size: 34px; font-weight: 900;">SELECT MODE</h2>
+        <div class="mode-container">
+            <div class="mode-card" onclick="window.startApp('webcam')">
+                <h3>📷 실시간 웹캠 분석</h3>
+                <ul>
+                    <li>카메라 즉각 피드백</li>
+                    <li>자동 캘리브레이션</li>
+                    <li>KST(한국시간) 완벽 반영</li>
+                </ul>
+            </div>
+            <div class="mode-card" onclick="window.startApp('video')">
+                <h3>🎬 YOLO 영상 분석</h3>
+                <ul>
+                    <li>mp4 파일 정밀 분석</li>
+                    <li>YOLOv8 최적화 엔진</li>
+                    <li>스쿼트 판정 알고리즘</li>
+                </ul>
+            </div>
+        </div>
+        <button onclick="window.goHome()" style="margin-top: 40px; background:none; border:none; color:#666; cursor:pointer; text-decoration:underline;">BACK TO MAIN</button>
+    </div>
+
+    <div id="app-screen" class="screen hidden" style="justify-content: flex-start;">
+        <header id="app-header">
+            <button class="back-nav-btn" onclick="window.backToMode()">← BACK</button>
+            <div style="color: var(--neon-cyan); font-weight: 900; margin-left: 20px;">HEALTH MATE PRO ENGINE</div>
+        </header>
+        <div class="main-container">
+            <div class="view-pane" id="video-pane">
+                <div class="data-overlay">
+                    <div style="font-size:10px; color:#888;">COUNT</div>
+                    <div id="count-val" class="stat-val">0</div>
+                    <div style="font-size:10px; color:#888; margin-top:8px;">PROGRESS</div>
+                    <div id="progress-val" class="stat-val">0%</div>
+                </div>
+                <button onclick="window.resetBaseline()" style="position:absolute; bottom:20px; left:20px; z-index:200; padding:9px 15px; background:var(--neon-pink); color:white; border:none; border-radius:10px; cursor:pointer; font-size:11px; font-weight:700;">CALIBRATE</button>
+                <video id="webcam" autoplay muted playsinline></video>
+                <canvas id="output-canvas"></canvas>
+            </div>
+            <div class="view-pane" id="avatar-pane"></div>
+        </div>
+        <footer class="footer-ctrl"><button class="save-btn" id="btn-save">STORE SESSION TO DB</button></footer>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.132.2';
+        import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/controls/OrbitControls.js';
+
+        const screens = { home: document.getElementById('home-screen'), mode: document.getElementById('mode-screen'), app: document.getElementById('app-screen') };
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('output-canvas');
+        const ctx = canvas.getContext('2d');
+        let scene, camera, renderer, avatar, model, controls, requestID;
+        let squatCount = 0, isDown = false, initialHipY = 0;
+
+        window.toggleTheme = () => {
+            document.body.classList.toggle('light-mode');
+            const isL = document.body.classList.contains('light-mode');
+            document.getElementById('theme-icon').innerText = isL ? "☀️" : "🌙";
+            document.getElementById('theme-text').innerText = isL ? "LIGHT MODE" : "DARK MODE";
+            if(scene) scene.background = new THREE.Color(isL ? 0xf4f7f6 : 0x0a0a0c);
+        };
+
+        window.showModeSelect = () => { screens.home.classList.add('hidden'); screens.mode.classList.remove('hidden'); };
+        window.goHome = () => { screens.mode.classList.add('hidden'); screens.home.classList.remove('hidden'); };
+        
+        window.backToMode = () => {
+            if (requestID) cancelAnimationFrame(requestID);
+            if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
+            video.src = ""; video.load();
+            if (renderer) {
+                renderer.dispose();
+                const container = document.getElementById('avatar-pane');
+                if(container && container.contains(renderer.domElement)) container.removeChild(renderer.domElement);
+            }
+            screens.app.classList.add('hidden'); screens.mode.classList.remove('hidden');
+            squatCount = 0; initialHipY = 0; isDown = false;
+        };
+
+        window.resetBaseline = () => { initialHipY = 0; };
+
+        function init3DEngine() {
+            const container = document.getElementById('avatar-pane');
+            container.innerHTML = "";
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(document.body.classList.contains('light-mode') ? 0xf4f7f6 : 0x0a0a0c);
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth/container.clientHeight, 0.1, 1000);
+            camera.position.set(2, 2, 4);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.target.set(0, 1, 0);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(2, 4, 2); scene.add(light);
+            scene.add(new THREE.GridHelper(10, 20, 0x444444, 0x222222));
+            new GLTFLoader().load('./models/rpm.glb', (gltf) => { avatar = gltf.scene; scene.add(avatar); avatar.position.y = 0; });
+            function anim() { if(!screens.app.classList.contains('hidden')) { requestAnimationFrame(anim); controls.update(); renderer.render(scene, camera); } }
+            anim();
+        }
+
+        window.startApp = async (type) => {
+            squatCount = 0; document.getElementById('count-val').innerText = "0";
+            screens.mode.classList.add('hidden'); screens.app.style.visibility = "visible"; screens.app.style.opacity = "1";
+            screens.app.classList.remove('hidden');
+            init3DEngine(); model = await tflite.loadTFLiteModel('./models/best.tflite');
+            if (type === 'webcam') {
+                const s = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                video.srcObject = s;
+            } else { video.src = "./squat.mp4"; }
+            video.onloadedmetadata = () => predict();
+        };
+
+        async function predict() {
+            if (!model || video.videoWidth === 0 || screens.app.classList.contains('hidden')) return;
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            const input = tf.tidy(() => tf.browser.fromPixels(video).resizeBilinear([640, 640]).div(255.0).expandDims(0));
+            const res = await model.predict(input); const data = await res.data();
+            let kps = [], maxS = -1, bIdx = -1;
+            for(let i=0; i<8400; i++) { if(data[4*8400+i] > maxS) { maxS = data[4*8400+i]; bIdx = i; } }
+            for(let k=0; k<17; k++) {
+                const s = data[(5 + k * 3 + 2) * 8400 + bIdx];
+                kps.push({ x: data[(5+k*3)*8400+bIdx]*canvas.width, y: data[(5+k*3+1)*8400+bIdx]*canvas.height, v: (s > 0.3) });
+            }
+            if (kps[11].v && kps[12].v) {
+                const h = (kps[11].y + kps[12].y) / 2;
+                if (initialHipY === 0 || h < initialHipY) initialHipY = h;
+                let p = Math.max(0, Math.min(1, (h - initialHipY) / 85));
+                document.getElementById('progress-val').innerText = Math.round(p * 100) + "%";
+                if (avatar) {
+                    avatar.position.y = -p * 0.45;
+                    avatar.traverse(b => { if (b.name.includes('UpLeg')) b.rotation.x = -p * 1.35; if (b.name.includes('Leg') && !b.name.includes('Up')) b.rotation.x = p * 1.65; });
+                }
+                if (p > 0.75 && !isDown) isDown = true;
+                if (p < 0.25 && isDown) { isDown = false; squatCount++; document.getElementById('count-val').innerText = squatCount; }
+            }
+            drawSkeleton(kps); input.dispose(); requestID = requestAnimationFrame(predict);
+        }
+
+        function drawSkeleton(pts) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.lineWidth = 5; ctx.strokeStyle = "#00FFFB";
+            const conns = [[5,6],[5,11],[6,12],[11,12],[5,7],[7,9],[6,8],[8,10],[11,13],[13,15],[12,14],[14,16]];
+            conns.forEach(([s, e]) => { if (pts[s]?.v && pts[e]?.v) { ctx.beginPath(); ctx.moveTo(pts[s].x, pts[s].y); ctx.lineTo(pts[e].x, pts[e].y); ctx.stroke(); } });
+        }
+
+        // [중요] 한국 시간(KST) 완벽 저장 로직
+        document.getElementById('btn-save').onclick = async () => {
+            const now = new Date();
+            // 1. 한국 시간 문자열 수동 생성 (ISO 형식은 무조건 UTC로 변환되므로 직접 포맷팅)
+            const kstTime = new Intl.DateTimeFormat('ko-KR', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false, timeZone: 'Asia/Seoul'
+            }).format(now).replace(/\. /g, '-').replace('.', '');
+
+            const payload = { 
+                studentId: "2025730082", 
+                name: "Jeong In-yong", 
+                count: squatCount,
+                kst_time: kstTime // 이 문자열이 DB에 한국 시간 그대로 찍힙니다.
+            };
+
+            await fetch('http://localhost:3000/api/workout', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify(payload) 
+            });
+            alert(`학번 2025730082 정인용 님, 한국시간(${kstTime})으로 저장 완료!`);
+        };
+    </script>
+</body>
+</html>
