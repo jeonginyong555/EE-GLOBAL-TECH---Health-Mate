@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HEALTH MATE 기록 조회</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0b0f;
+      color: #fff;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 20px;
+      color: #23e6ff;
+      font-size: 44px;
+      font-weight: 800;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #bbb;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    input, button, select {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #17171d;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    input {
+      min-width: 220px;
+    }
+
+    button {
+      cursor: pointer;
+      background: #23e6ff;
+      color: #000;
+      font-weight: 700;
+      border: none;
+      transition: 0.15s ease;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .danger-btn {
+      background: #ff4d67;
+      color: #fff;
+    }
+
+    .danger-btn:hover {
+      opacity: 0.92;
+    }
+
+    .row-delete-btn {
+      background: #ff5a5a;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .status {
+      margin-bottom: 16px;
+      color: #9ca3af;
+      font-size: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #111218;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #22252d;
+      text-align: center;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #151822;
+      color: #23e6ff;
+      font-size: 15px;
+    }
+
+    tr:hover {
+      background: #181b25;
+    }
+
+    .empty {
+      padding: 30px;
+      text-align: center;
+      color: #aaa;
+      background: #111218;
+      border-radius: 14px;
+      font-size: 18px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #222;
+      font-size: 12px;
+      color: #fff;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top-actions">
+      <h1>HEALTH MATE 운동 기록</h1>
+      <div class="small">MongoDB 저장 기록 조회</div>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="studentIdInput" placeholder="학번 입력 (예: 2025730079)" />
+      <button id="loadAllBtn">전체 조회</button>
+      <button id="loadByIdBtn">학번 조회</button>
+      <button id="refreshBtn">새로고침</button>
+      <button id="deleteAllBtn" class="danger-btn">전체 삭제</button>
+    </div>
+
+    <div id="status" class="status">기록을 불러오는 중...</div>
+
+    <div id="tableArea"></div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:3000";
+
+    const tableArea = document.getElementById("tableArea");
+    const statusEl = document.getElementById("status");
+    const studentIdInput = document.getElementById("studentIdInput");
+    const loadAllBtn = document.getElementById("loadAllBtn");
+    const loadByIdBtn = document.getElementById("loadByIdBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const deleteAllBtn = document.getElementById("deleteAllBtn");
+
+    let currentMode = "all";
+    let currentStudentId = "";
+
+    function renderTable(records) {
+      if (!records || records.length === 0) {
+        tableArea.innerHTML = `<div class="empty">조회된 기록이 없습니다.</div>`;
+        return;
+      }
+
+      const rows = records.map((r, index) => {
+        const avgDepth = typeof r.avgDepth === "number" ? r.avgDepth.toFixed(3) : "-";
+        const setResults = Array.isArray(r.setResults) ? r.setResults.length : 0;
+        const timeText = r.kst_time || (r.timestamp ? new Date(r.timestamp).toLocaleString("ko-KR") : "-");
+
+        return `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${r.studentId || "-"}</td>
+            <td>${r.name || "-"}</td>
+            <td>${r.count ?? "-"}</td>
+            <td>${avgDepth}</td>
+            <td>${r.depthLowCount ?? "-"}</td>
+            <td>${r.torsoWarningCount ?? "-"}</td>
+            <td><span class="pill">${r.mode || "-"}</span></td>
+            <td><span class="pill">${r.inputMode || "-"}</span></td>
+            <td>${setResults}</td>
+            <td>${timeText}</td>
+            <td>
+              <button class="row-delete-btn" onclick="deleteRecord('${r._id}')">삭제</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tableArea.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>학번</th>
+                <th>이름</th>
+                <th>횟수</th>
+                <th>평균 깊이</th>
+                <th>깊이 부족</th>
+                <th>상체 경고</th>
+                <th>운동 모드</th>
+                <th>입력 모드</th>
+                <th>세트 기록 수</th>
+                <th>저장 시각</th>
+                <th>삭제</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    async function loadAllRecords() {
+      try {
+        statusEl.textContent = "전체 기록 불러오는 중...";
+        const res = await fetch(`${API_BASE}/api/workout`);
+        if (!res.ok) throw new Error(`조회 실패: ${res.status}`);
+
+        const data = await res.json();
+        statusEl.textContent = `전체 ${data.length}개의 기록을 불러왔습니다.`;
+        renderTable(data);
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = `오류: ${err.message}`;
+        tableArea.innerHTML = `<div class="empty">기록 조회 실패</div>`;
+      }
+    }
+
+    async function loadRecordsByStudentId(studentId) {
+      try {
+        statusEl.textContent = `${studentId} 학번 기록 불러오는 중...`;
+        const res = await fetch(`${API_BASE}/api/workout/${studentId}`);
+        if (!res.ok) throw new Error(`조회 실패: ${res.status}`);
+
+        const data = await res.json();
+        statusEl.textContent = `${studentId} 학번 기록 ${data.length}개를 불러왔습니다.`;
+        renderTable(data);
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = `오류: ${err.message}`;
+        tableArea.innerHTML = `<div class="empty">기록 조회 실패</div>`;
+      }
+    }
+
+    async function deleteRecord(id) {
+      const ok = confirm("이 기록을 삭제할까?");
+      if (!ok) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/workout/record/${id}`, {
+          method: "DELETE"
+        });
+
+        if (!res.ok) throw new Error(`삭제 실패: ${res.status}`);
+
+        alert("삭제 완료");
+
+        if (currentMode === "id" && currentStudentId) {
+          await loadRecordsByStudentId(currentStudentId);
+        } else {
+          await loadAllRecords();
+        }
+      } catch (err) {
+        console.error(err);
+        alert(`삭제 실패: ${err.message}`);
+      }
+    }
+
+    async function deleteAllRecords() {
+      const ok = confirm("전체 기록을 모두 삭제할까? 되돌릴 수 없음.");
+      if (!ok) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/workout`, {
+          method: "DELETE"
+        });
+
+        if (!res.ok) throw new Error(`전체 삭제 실패: ${res.status}`);
+
+        const data = await res.json();
+        alert(`전체 삭제 완료 (${data.deletedCount ?? 0}개)`);
+
+        currentMode = "all";
+        currentStudentId = "";
+        studentIdInput.value = "";
+        await loadAllRecords();
+      } catch (err) {
+        console.error(err);
+        alert(`전체 삭제 실패: ${err.message}`);
+      }
+    }
+
+    loadAllBtn.addEventListener("click", () => {
+      currentMode = "all";
+      currentStudentId = "";
+      loadAllRecords();
+    });
+
+    loadByIdBtn.addEventListener("click", () => {
+      const studentId = studentIdInput.value.trim();
+
+      if (!studentId) {
+        alert("학번을 입력하세요.");
+        return;
+      }
+
+      currentMode = "id";
+      currentStudentId = studentId;
+      loadRecordsByStudentId(studentId);
+    });
+
+    refreshBtn.addEventListener("click", () => {
+      if (currentMode === "id" && currentStudentId) {
+        loadRecordsByStudentId(currentStudentId);
+      } else {
+        loadAllRecords();
+      }
+    });
+
+    deleteAllBtn.addEventListener("click", deleteAllRecords);
+
+    window.deleteRecord = deleteRecord;
+
+    loadAllRecords();
+  </script>
+</body>
+</html>
