@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HEALTH MATE PRO</title>
+  <style>
+    :root {
+      --bg-color: #05070b;
+      --bg-elev: rgba(20, 20, 24, 0.88);
+      --bg-soft: rgba(255, 255, 255, 0.04);
+      --text-color: #ffffff;
+      --muted: #9aa4b2;
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(255, 255, 255, 0.14);
+      --neon-cyan: #1fe4ff;
+      --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.32);
+      --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.24);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
+
+    body.light-mode {
+      --bg-color: #eef3f7;
+      --bg-elev: rgba(255, 255, 255, 0.92);
+      --bg-soft: rgba(17, 24, 39, 0.04);
+      --text-color: #111827;
+      --muted: #5b6470;
+      --line: rgba(17, 24, 39, 0.08);
+      --line-strong: rgba(17, 24, 39, 0.14);
+      --neon-cyan: #00c7e6;
+      --shadow-lg: 0 18px 34px rgba(17, 24, 39, 0.12);
+      --shadow-md: 0 10px 24px rgba(17, 24, 39, 0.10);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top, rgba(31, 228, 255, 0.08), transparent 35%),
+        radial-gradient(circle at bottom, rgba(31, 228, 255, 0.04), transparent 25%),
+        var(--bg-color);
+    }
+
+    .hidden {
+      display: none !important;
+      pointer-events: none !important;
+    }
+
+    .screen {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    #mode-screen {
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 24px;
+      z-index: 20;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    #app-screen {
+      padding: 14px 16px 16px;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .theme-btn {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+      color: var(--text-color);
+      border-radius: 16px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 800;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* =========================
+       HOME / MODE SCREEN
+    ========================= */
+    .home-shell {
+      width: min(1280px, 100%);
+      margin: 0 auto;
+      min-height: auto;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .home-left,
+    .home-right {
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .home-left {
+      padding: 28px 26px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      min-height: 720px;
+    }
+
+    .home-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      color: var(--neon-cyan);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+
+    .home-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .home-title {
+      margin: 0;
+      font-size: clamp(34px, 4vw, 52px);
+      font-weight: 900;
+      line-height: 1.04;
+      letter-spacing: -0.02em;
+    }
+
+    .home-title .accent {
+      color: var(--neon-cyan);
+    }
+
+    .home-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 32ch;
+    }
+
+    .home-quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .home-quick-btn {
+      border: 1px solid var(--line);
+      background: rgba(10, 12, 18, 0.50);
+      color: var(--text-color);
+      border-radius: 18px;
+      padding: 16px;
+      cursor: pointer;
+      text-align: left;
+      transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease;
+      backdrop-filter: blur(10px);
+      min-height: 96px;
+    }
+
+    .home-quick-btn:hover {
+      transform: translateY(-3px);
+      border-color: rgba(31, 228, 255, 0.44);
+      box-shadow: 0 0 22px rgba(31, 228, 255, 0.14);
+    }
+
+    .home-quick-icon {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .home-quick-title {
+      font-size: 15px;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .home-quick-text {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .home-footnote {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+    }
+
+    .student-id-fixed {
+      color: #7c8591;
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .home-right {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: auto;
+    }
+
+    .mode-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .mode-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mode-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 0.10em;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+    }
+
+    .mode-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .avatar-area {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .preview-column {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .avatar-preview-box {
+      padding: 12px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: rgba(10, 12, 18, 0.44);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .avatar-preview-box img {
+      width: 100%;
+      max-width: 170px;
+      height: 190px;
+      object-fit: contain;
+      border-radius: 14px;
+      background: #111;
+      padding: 6px;
+      display: block;
+    }
+
+    #avatarPreviewName,
+    #gymPreviewName {
+      font-size: 16px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .avatar-preview-caption {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .avatar-config-card {
+      border: 1px solid var(--line);
+      background: rgba(10, 12, 18, 0.44);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .avatar-select-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .avatar-select-label,
+    .setup-label {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .avatar-select,
+    .setup-select,
+    .setup-input {
+      width: 100%;
+      min-width: 0;
+      height: 44px;
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line-strong);
+      background: var(--bg-elev);
+      color: var(--text-color);
+      font-size: 13px;
+      font-weight: 800;
+      outline: none;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+    }
+
+    .avatar-select:focus,
+    .setup-select:focus,
+    .setup-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 3px rgba(31, 228, 255, 0.12);
+    }
+
+    .setup-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .setup-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .setup-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .setup-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .challenge-info {
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255, 90, 103, 0.08);
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .challenge-badge {
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 90, 103, 0.16);
+      color: #ff7b88;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .challenge-title {
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .challenge-text,
+    .avatar-config-note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* ===== 변경된 모드 카드 영역 ===== */
+    .mode-container {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .mode-card {
+      background: linear-gradient(
+        180deg,
+        rgba(255,255,255,0.03) 0%,
+        rgba(255,255,255,0.015) 100%
+      );
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px 14px;
+      cursor: pointer;
+      transition:
+        transform 0.22s ease,
+        border-color 0.22s ease,
+        box-shadow 0.22s ease,
+        background 0.22s ease;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-md);
+      user-select: none;
+    }
+
+    .mode-card:hover {
+      border-color: var(--neon-cyan);
+      transform: translateY(-5px);
+      box-shadow: 0 0 22px rgba(31, 228, 255, 0.16);
+    }
+
+    .mode-card-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .mode-card-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: rgba(31, 228, 255, 0.10);
+      font-size: 26px;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .mode-card h3 {
+      margin: 0;
+      font-size: 20px;
+      color: var(--neon-cyan);
+      text-align: center;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+
+    .mode-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 13px;
+      max-width: 16ch;
+    }
+
+    .mode-card ul {
+      display: none;
+    }
+
+    /* =========================
+       APP SCREEN
+    ========================= */
+    .app-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .back-btn {
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+      color: var(--text-color);
+      border-radius: 12px;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .brand-mini {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      letter-spacing: 0.5px;
+    }
+
+    .main-grid {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+    }
+
+    .viewer-card {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      padding: 12px;
+    }
+
+    .viewer-stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      background: #05070b;
+      border-radius: 16px;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .stage-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      background: transparent;
+    }
+
+    #video {
+      z-index: 1;
+      background: #000;
+      display: none;
+    }
+
+    #webcamStage {
+      z-index: 3;
+      display: none;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #webcamStage canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #guideStage {
+      z-index: 4;
+      display: none;
+      background: #000;
+      overflow: hidden;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    #guideCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #000;
+      pointer-events: none;
+    }
+
+    .hidden-video {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      left: -9999px !important;
+      top: -9999px !important;
+    }
+
+    #threeWrap {
+      z-index: 5;
+      background: #0d1117;
+      display: none;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    #canvas {
+      z-index: 1;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    #overlay {
+      z-index: 2;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    #threeWrap canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+
+    .stage-main {
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    .stage-pip {
+      inset: auto 18px 86px auto !important;
+      width: 220px !important;
+      height: 300px !important;
+      border-radius: 18px !important;
+      overflow: hidden !important;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: #000;
+    }
+
+    .stage-pip::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+      pointer-events: none;
+    }
+
+    .floating-chip {
+      position: absolute;
+      z-index: 20;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(10, 12, 18, 0.65);
+      color: #fff;
+      backdrop-filter: blur(8px);
+      font-size: 14px;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    #modeChip { top: 12px; left: 12px; }
+    #statusChip { top: 12px; right: 12px; }
+    #gestureChip { bottom: 12px; right: 12px; color: var(--neon-cyan); }
+    #helpChip {
+      bottom: 12px;
+      left: 12px;
+      max-width: 56%;
+      line-height: 1.4;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .counter-chip {
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 88px;
+      text-align: center;
+      font-size: 34px;
+      font-weight: 900;
+      color: #ffffff;
+      background: rgba(0, 0, 0, 0.32);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      padding: 10px 22px;
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.26),
+        0 0 18px rgba(31, 228, 255, 0.16);
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+      z-index: 30;
+      transition:
+        transform 0.18s ease,
+        opacity 0.18s ease,
+        box-shadow 0.18s ease;
+      opacity: 0.96;
+    }
+
+    .counter-chip.pop {
+      transform: translateX(-50%) scale(1.12);
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.32),
+        0 0 26px rgba(31, 228, 255, 0.30);
+    }
+
+    body.light-mode .counter-chip {
+      background: rgba(255, 255, 255, 0.62);
+      color: #111827;
+      border: 1px solid rgba(17, 24, 39, 0.08);
+    }
+
+    .center-alert {
+      position: absolute;
+      left: 50%;
+      top: 84px;
+      transform: translateX(-50%) scale(0.96);
+      z-index: 35;
+      min-width: 320px;
+      max-width: min(76vw, 560px);
+      padding: 18px 22px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(10, 12, 18, 0.88);
+      color: #fff;
+      text-align: center;
+      backdrop-filter: blur(14px);
+      box-shadow:
+        0 18px 40px rgba(0,0,0,0.34),
+        0 0 24px rgba(31, 228, 255, 0.12);
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        opacity 0.18s ease,
+        transform 0.18s ease;
+    }
+
+    .center-alert.show {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    .center-alert.good {
+      border-color: rgba(33, 225, 123, 0.38);
+      background: rgba(33, 225, 123, 0.18);
+    }
+
+    .center-alert.warn {
+      border-color: rgba(255, 176, 32, 0.38);
+      background: rgba(255, 176, 32, 0.18);
+    }
+
+    .center-alert.bad {
+      border-color: rgba(255, 90, 103, 0.38);
+      background: rgba(255, 90, 103, 0.18);
+    }
+
+    .center-alert.missing {
+      border-color: rgba(57, 160, 255, 0.38);
+      background: rgba(57, 160, 255, 0.18);
+    }
+
+    .center-alert-title {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 6px;
+    }
+
+    .center-alert-text {
+      font-size: 15px;
+      line-height: 1.45;
+      color: rgba(255,255,255,0.94);
+      word-break: keep-all;
+    }
+
+    body.light-mode .center-alert {
+      background: rgba(255,255,255,0.88);
+      color: #111827;
+      border-color: rgba(17,24,39,0.08);
+      box-shadow: 0 14px 28px rgba(17,24,39,0.12);
+    }
+
+    body.light-mode .center-alert-text {
+      color: rgba(17,24,39,0.86);
+    }
+
+    .feedback-toast-wrap {
+      position: absolute;
+      top: 72px;
+      right: 14px;
+      z-index: 28;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: min(360px, calc(100% - 28px));
+      pointer-events: none;
+    }
+
+    .feedback-toast {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      color: #fff;
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.28);
+      animation: toastIn 0.22s ease;
+      opacity: 0.98;
+    }
+
+    .feedback-toast.good {
+      background: rgba(33, 225, 123, 0.18);
+      border-color: rgba(33, 225, 123, 0.35);
+    }
+
+    .feedback-toast.warn {
+      background: rgba(255, 176, 32, 0.18);
+      border-color: rgba(255, 176, 32, 0.35);
+    }
+
+    .feedback-toast.bad {
+      background: rgba(255, 90, 103, 0.18);
+      border-color: rgba(255, 90, 103, 0.35);
+    }
+
+    .feedback-toast.missing {
+      background: rgba(57, 160, 255, 0.18);
+      border-color: rgba(57, 160, 255, 0.35);
+    }
+
+    .feedback-toast-icon {
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 900;
+      background: rgba(255,255,255,0.14);
+    }
+
+    .feedback-toast-body {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .feedback-toast-title {
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .feedback-toast-text {
+      font-size: 13px;
+      line-height: 1.45;
+      color: rgba(255,255,255,0.92);
+      word-break: keep-all;
+    }
+
+    .feedback-toast.hide {
+      animation: toastOut 0.20s ease forwards;
+    }
+
+    body.light-mode .feedback-toast {
+      color: #111827;
+      box-shadow: 0 10px 24px rgba(17, 24, 39, 0.12);
+    }
+
+    body.light-mode .feedback-toast .feedback-toast-text {
+      color: rgba(17, 24, 39, 0.88);
+    }
+
+    body.light-mode .feedback-toast-icon {
+      background: rgba(17,24,39,0.08);
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.98);
+      }
+      to {
+        opacity: 0.98;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes toastOut {
+      from {
+        opacity: 0.98;
+        transform: translateY(0) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.98);
+      }
+    }
+
+    .control-panel {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 21;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: rgba(10, 12, 18, 0.56);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 10px;
+      backdrop-filter: blur(10px);
+    }
+
+    .action-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .primary-btn {
+      background: var(--neon-cyan);
+      color: #000;
+    }
+
+    .ghost-btn {
+      background: #20222c;
+      color: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .control-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 0 6px;
+      user-select: none;
+    }
+
+    /* =========================
+       PIP SETTINGS
+    ========================= */
+    .pip-settings-btn {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index: 32;
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 50%;
+      background: rgba(10, 12, 18, 0.78);
+      color: #fff;
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+      font-weight: 900;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+
+    .pip-settings-btn:hover {
+      transform: scale(1.06);
+      border-color: rgba(31, 228, 255, 0.48);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
+    }
+
+    .pip-settings-panel {
+      position: absolute;
+      right: 18px;
+      bottom: 74px;
+      z-index: 33;
+      min-width: 220px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(10, 12, 18, 0.92);
+      color: #fff;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.34);
+    }
+
+    .pip-settings-title {
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      margin-bottom: 12px;
+      letter-spacing: 0.3px;
+    }
+
+    .pip-settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      user-select: none;
+    }
+
+    .pip-settings-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--neon-cyan);
+      flex-shrink: 0;
+    }
+
+    body.light-mode .pip-settings-btn {
+      background: rgba(255, 255, 255, 0.82);
+      color: #111827;
+      border-color: rgba(17, 24, 39, 0.08);
+    }
+
+    body.light-mode .pip-settings-panel {
+      background: rgba(255, 255, 255, 0.94);
+      color: #111827;
+      border-color: rgba(17, 24, 39, 0.08);
+      box-shadow: 0 12px 24px rgba(17, 24, 39, 0.12);
+    }
+
+    body.light-mode .pip-settings-row {
+      color: #111827;
+    }
+
+    .user-info-panel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 6px;
+      z-index: 200;
+      pointer-events: auto;
+    }
+
+    .user-info-input {
+      width: 130px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(10, 12, 18, 0.72);
+      color: #fff;
+      padding: 0 10px;
+      font-size: 13px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    .user-info-input::placeholder {
+      color: rgba(255,255,255,0.45);
+    }
+
+    body.light-mode .user-info-input {
+      background: rgba(255,255,255,0.88);
+      color: #111827;
+    }
+
+    body.light-mode .user-info-input::placeholder {
+      color: rgba(17,24,39,0.45);
+    }
+
+    @media (max-width: 1400px) {
+      .avatar-area {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-column {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .avatar-preview-box {
+        flex: 1 1 220px;
+      }
+
+      .setup-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .home-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-mini {
+        font-size: 15px;
+      }
+
+      .control-panel {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: calc(100% - 24px);
+        border-radius: 18px;
+      }
+
+      .mode-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .stage-pip {
+        width: 170px !important;
+        height: 226px !important;
+        inset: auto 12px 84px auto !important;
+      }
+
+      .counter-chip {
+        top: 12px;
+        font-size: 28px;
+        min-width: 74px;
+        padding: 8px 18px;
+      }
+
+      .feedback-toast-wrap {
+        top: 64px;
+        right: 10px;
+        width: min(320px, calc(100% - 20px));
+      }
+
+      .feedback-toast {
+        padding: 11px 12px;
+        border-radius: 14px;
+      }
+
+      .pip-settings-btn {
+        right: 12px;
+        bottom: 12px;
+        width: 44px;
+        height: 44px;
+        font-size: 19px;
+      }
+
+      .pip-settings-panel {
+        right: 12px;
+        bottom: 64px;
+        min-width: 200px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      #mode-screen {
+        padding: 18px;
+      }
+
+      .home-left,
+      .home-right {
+        padding: 20px;
+        border-radius: 22px;
+        min-height: auto;
+      }
+
+      .home-quick-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .student-id-fixed {
+        letter-spacing: 1px;
+      }
+
+      .setup-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-container {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-card {
+        min-height: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button id="themeToggle" class="theme-btn">🌙 DARK MODE</button>
+
+  <div id="mode-screen" class="screen">
+    <div class="home-shell">
+      <section class="home-left">
+        <div class="home-badge">HEALTH MATE PRO</div>
+
+        <div class="home-title-wrap">
+          <h1 class="home-title">
+            운동을 더 직관적으로,<br />
+            <span class="accent">HEALTH MATE</span>와 함께
+          </h1>
+          <p class="home-subtitle">
+            아바타를 선택하고 원하는 운동 모드를 고른 뒤 바로 시작하세요.
+            기록과 분석 페이지도 홈에서 바로 확인할 수 있습니다.
+          </p>
+        </div>
+
+        <div class="home-quick-grid">
+          <button id="modeRecordsBtn" class="home-quick-btn" type="button">
+            <div class="home-quick-icon">📋</div>
+            <div class="home-quick-title">운동 기록</div>
+            <div class="home-quick-text">저장된 기록과 세션 결과를 확인합니다.</div>
+          </button>
+
+          <button id="modeAnalyticsBtn" class="home-quick-btn" type="button">
+            <div class="home-quick-icon">📊</div>
+            <div class="home-quick-title">운동 분석</div>
+            <div class="home-quick-text">운동량과 변화 흐름을 그래프로 확인합니다.</div>
+          </button>
+        </div>
+
+        <div class="home-footnote">
+          <span>Ready for squat session</span>
+          <div class="student-id-fixed">STUDENT ID : 2025730079</div>
+        </div>
+      </section>
+
+      <section class="home-right">
+        <div class="mode-header">
+          <div class="mode-title-wrap">
+            <h2 class="mode-title">Workout Setup</h2>
+            <p class="mode-subtitle">아바타, 헬스장, 운동 모드를 설정하고 바로 시작하세요.</p>
+          </div>
+        </div>
+
+        <div class="avatar-area">
+          <div class="preview-column">
+            <div class="avatar-preview-box">
+              <img id="avatarPreviewImage" src="/images/avatar_default.png" alt="아바타 미리보기" />
+              <div id="avatarPreviewName">기본 RPM</div>
+              <div class="avatar-preview-caption">현재 선택된 아바타 미리보기</div>
+            </div>
+
+            <div class="avatar-preview-box">
+              <img id="gymPreviewImage" src="/images/Untitled_gym.png" alt="헬스장 미리보기" />
+              <div id="gymPreviewName">gym1</div>
+              <div class="avatar-preview-caption">현재 선택된 헬스장 미리보기</div>
+            </div>
+          </div>
+
+          <div class="avatar-config-card">
+            <div class="avatar-select-wrap">
+              <label for="avatarSelect" class="avatar-select-label">AVATAR SELECT</label>
+              <select id="avatarSelect" class="avatar-select">
+                <option value="default">기본 RPM</option>
+                <option value="vroid1">VRoid 1</option>
+                <option value="vroid2">VRoid 2</option>
+                <option value="vroid3">VRoid 3</option>
+                <option value="vroid4">VRoid 4</option>
+              </select>
+            </div>
+
+            <div class="setup-panel">
+              <div class="setup-row">
+                <label for="gymSelect" class="setup-label">헬스장 배경</label>
+                <select id="gymSelect" class="setup-select">
+                  <option value="gym1">gym1</option>
+                  <option value="gym2">gym2</option>
+                  <option value="gym3">gym3</option>
+                  <option value="gym4">gym4</option>
+                </select>
+              </div>
+
+              <div class="setup-row">
+                <label for="workoutTypeSelect" class="setup-label">운동 타입</label>
+                <select id="workoutTypeSelect" class="setup-select">
+                  <option value="normal">노말 모드</option>
+                  <option value="challenge">챌린지 모드</option>
+                </select>
+              </div>
+
+              <div id="normalWorkoutSettings" class="setup-grid">
+                <div class="setup-field">
+                  <label for="setCountInput" class="setup-label">세트 수</label>
+                  <input id="setCountInput" class="setup-input" type="number" min="1" max="20" value="3" />
+                </div>
+
+                <div class="setup-field">
+                  <label for="repCountInput" class="setup-label">세트당 횟수</label>
+                  <input id="repCountInput" class="setup-input" type="number" min="1" max="100" value="10" />
+                </div>
+
+                <div class="setup-field">
+                  <label for="restSecondsInput" class="setup-label">휴식 시간(초)</label>
+                  <input id="restSecondsInput" class="setup-input" type="number" min="0" max="600" value="30" />
+                </div>
+              </div>
+
+              <div id="challengeWorkoutSettings" class="challenge-info hidden">
+                <div class="challenge-badge">CHALLENGE</div>
+                <div class="challenge-title">논스톱 스쿼트 챌린지</div>
+                <div class="challenge-text">
+                  한 번의 스쿼트를 <b>10초 안에</b> 완료해야 하며,
+                  중간 휴식 없이 연속으로 진행합니다.
+                </div>
+              </div>
+            </div>
+
+            <p class="avatar-config-note">
+              아래 모드 중 하나를 누르면 현재 아바타와 운동 설정으로 바로 시작합니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="mode-container">
+          <div class="mode-card" data-mode="standard">
+            <div class="mode-card-top">
+              <div class="mode-card-icon">🎬</div>
+              <h3>정석 모드</h3>
+            </div>
+            <p>시범 자세와 기준 동작을 확인하는 모드</p>
+          </div>
+
+          <div class="mode-card" data-mode="feedback">
+            <div class="mode-card-top">
+              <div class="mode-card-icon">📷</div>
+              <h3>피드백 모드</h3>
+            </div>
+            <p>웹캠 기반으로 실시간 자세를 교정하는 모드</p>
+          </div>
+
+          <div class="mode-card" data-mode="avatar">
+            <div class="mode-card-top">
+              <div class="mode-card-icon">🧍</div>
+              <h3>아바타 모드</h3>
+            </div>
+            <p>아바타 중심으로 운동 흐름을 보는 모드</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="app-screen" class="screen hidden">
+    <div class="app-topbar">
+      <div class="topbar-left">
+        <button id="backBtn" class="back-btn">← BACK</button>
+        <div class="brand-mini">HEALTH MATE PRO ENGINE</div>
+
+        <button id="saveRecordBtn" class="back-btn" type="button">💾 SAVE</button>
+        <button id="openRecordsBtn" class="back-btn" type="button">📋 RECORDS</button>
+        <button id="openAnalyticsBtn" class="back-btn" type="button">📊 ANALYTICS</button>
+        <button id="openRecordingsBtn" class="back-btn" type="button">🎥 VIDEOS</button>
+
+        <div id="userInfoPanel" class="user-info-panel">
+          <input id="studentIdInput" class="user-info-input" type="text" placeholder="학번 입력" />
+          <input id="userNameInput" class="user-info-input" type="text" placeholder="이름 입력" />
+        </div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="viewer-card">
+        <div id="viewerStage" class="viewer-stage">
+          <video id="video" class="stage-layer" playsinline muted></video>
+
+          <div id="webcamStage" class="stage-layer">
+            <canvas id="canvas" class="stage-layer"></canvas>
+            <canvas id="overlay" class="stage-layer"></canvas>
+          </div>
+
+          <div id="guideStage" class="stage-layer">
+            <canvas id="guideCanvas" class="stage-layer"></canvas>
+            <video id="guideVideo" playsinline muted loop class="hidden-video"></video>
+          </div>
+
+          <div id="threeWrap" class="stage-layer"></div>
+
+          <div id="modeChip" class="floating-chip">MODE</div>
+          <div id="statusChip" class="floating-chip">READY</div>
+          <div id="helpChip" class="floating-chip">설정 대기 중</div>
+          <div id="gestureChip" class="floating-chip">GESTURE: -</div>
+          <div id="counterChip" class="floating-chip counter-chip hidden">0</div>
+
+          <div id="centerAlert" class="center-alert hidden">
+            <div id="centerAlertTitle" class="center-alert-title">알림</div>
+            <div id="centerAlertText" class="center-alert-text">내용</div>
+          </div>
+
+          <div id="feedbackToastWrap" class="feedback-toast-wrap"></div>
+
+          <button id="pipSettingsBtn" class="pip-settings-btn" type="button" aria-label="PIP 설정">
+            ⚙
+          </button>
+
+          <div id="pipSettingsPanel" class="pip-settings-panel hidden">
+            <div class="pip-settings-title">PIP 설정</div>
+
+            <div class="pip-settings-row">
+              <span id="pipToggleLabel">서브 화면 표시</span>
+              <input id="pipVisibleToggle" type="checkbox" />
+            </div>
+
+            <div id="feedbackWebcamOverlayToggleRow" class="pip-settings-row hidden">
+              <span>웹캠 오버레이</span>
+              <input id="feedbackWebcamOverlayToggle" type="checkbox" checked />
+            </div>
+
+            <div id="feedbackGuideOverlayToggleRow" class="pip-settings-row hidden">
+              <span>영상 오버레이</span>
+              <input id="feedbackGuideOverlayToggle" type="checkbox" checked />
+            </div>
+
+            <div id="avatarFistToggleRow" class="pip-settings-row hidden">
+              <span>주먹 전환</span>
+              <input id="avatarFistToggle" type="checkbox" checked />
+            </div>
+
+            <div id="avatarKnifeToggleRow" class="pip-settings-row hidden">
+              <span>손날 회전</span>
+              <input id="avatarKnifeToggle" type="checkbox" checked />
+            </div>
+
+            <div id="avatarOverlayToggleRow" class="pip-settings-row hidden">
+              <span>관절 오버레이</span>
+              <input id="avatarOverlayToggle" type="checkbox" checked />
+            </div>
+
+            <div id="avatarMarkerToggleRow" class="pip-settings-row hidden">
+              <span>마커 표시</span>
+              <input id="avatarMarkerToggle" type="checkbox" checked />
+            </div>
+          </div>
+
+          <div class="control-panel">
+            <button id="manualToggleBtn" class="action-btn primary-btn">수동 전환</button>
+            <button id="restartBtn" class="action-btn ghost-btn">재시작</button>
+            <button id="recordAvatarBtn" class="action-btn ghost-btn hidden" type="button">⏺ REC</button>
+            <label class="control-inline">
+              <input id="cameraRotateToggle" type="checkbox" />
+              자동 카메라 회전
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

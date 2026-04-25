@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HEALTH MATE 그래프 분석</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0b0f;
+      color: #fff;
+    }
+    .wrap {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1 {
+      color: #23e6ff;
+      margin: 0 0 20px;
+      font-size: 42px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #17171d;
+      color: #fff;
+      font-size: 14px;
+    }
+    button {
+      background: #23e6ff;
+      color: #000;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .status {
+      color: #aaa;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: #111218;
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px solid #20232b;
+    }
+    .card h2 {
+      margin: 0 0 14px;
+      color: #23e6ff;
+      font-size: 22px;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .summary-box {
+      background: #111218;
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid #20232b;
+    }
+    .summary-label {
+      color: #999;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .summary-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: #23e6ff;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>HEALTH MATE 운동 성장 그래프</h1>
+
+    <div class="toolbar">
+      <input type="text" id="studentIdInput" placeholder="학번 입력 (예: 2025730079)" />
+      <button id="loadAllBtn">전체 그래프</button>
+      <button id="loadByIdBtn">학번 그래프</button>
+      <button id="refreshBtn">새로고침</button>
+    </div>
+
+    <div id="status" class="status">데이터 불러오는 중...</div>
+
+    <div class="summary">
+      <div class="summary-box">
+        <div class="summary-label">총 기록 수</div>
+        <div class="summary-value" id="totalSessions">0</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">총 운동 횟수</div>
+        <div class="summary-value" id="totalCount">0</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">평균 깊이</div>
+        <div class="summary-value" id="avgDepthOverall">0</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">최근 모드</div>
+        <div class="summary-value" id="lastMode">-</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>날짜별 운동 횟수</h2>
+        <canvas id="countChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>날짜별 평균 깊이</h2>
+        <canvas id="depthChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>깊이 부족 횟수</h2>
+        <canvas id="depthLowChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>상체 경고 횟수</h2>
+        <canvas id="torsoWarnChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:3000";
+
+    const statusEl = document.getElementById("status");
+    const studentIdInput = document.getElementById("studentIdInput");
+    const loadAllBtn = document.getElementById("loadAllBtn");
+    const loadByIdBtn = document.getElementById("loadByIdBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    const totalSessionsEl = document.getElementById("totalSessions");
+    const totalCountEl = document.getElementById("totalCount");
+    const avgDepthOverallEl = document.getElementById("avgDepthOverall");
+    const lastModeEl = document.getElementById("lastMode");
+
+    let currentMode = "all";
+    let currentStudentId = "";
+
+    let countChart, depthChart, depthLowChart, torsoWarnChart;
+
+    function destroyCharts() {
+      if (countChart) countChart.destroy();
+      if (depthChart) depthChart.destroy();
+      if (depthLowChart) depthLowChart.destroy();
+      if (torsoWarnChart) torsoWarnChart.destroy();
+    }
+
+    function normalizeRecords(records) {
+      return [...records].reverse();
+    }
+
+    function buildLabels(records) {
+      return records.map((r, i) => {
+        if (r.kst_time) return r.kst_time;
+        if (r.timestamp) return new Date(r.timestamp).toLocaleString("ko-KR");
+        return `기록 ${i + 1}`;
+      });
+    }
+
+    function updateSummary(records) {
+      const totalSessions = records.length;
+      const totalCount = records.reduce((sum, r) => sum + (r.count || 0), 0);
+      const avgDepthOverall =
+        totalSessions > 0
+          ? records.reduce((sum, r) => sum + (r.avgDepth || 0), 0) / totalSessions
+          : 0;
+      const lastMode = totalSessions > 0 ? (records[records.length - 1].mode || "-") : "-";
+
+      totalSessionsEl.textContent = totalSessions;
+      totalCountEl.textContent = totalCount;
+      avgDepthOverallEl.textContent = avgDepthOverall.toFixed(3);
+      lastModeEl.textContent = lastMode;
+    }
+
+    function makeLineChart(canvasId, label, labels, data) {
+      return new Chart(document.getElementById(canvasId), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label,
+            data,
+            borderWidth: 3,
+            tension: 0.25,
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              labels: { color: "#fff" }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: "#ccc" },
+              grid: { color: "#222" }
+            },
+            y: {
+              ticks: { color: "#ccc" },
+              grid: { color: "#222" }
+            }
+          }
+        }
+      });
+    }
+
+    function makeBarChart(canvasId, label, labels, data) {
+      return new Chart(document.getElementById(canvasId), {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{
+            label,
+            data,
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              labels: { color: "#fff" }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: "#ccc" },
+              grid: { color: "#222" }
+            },
+            y: {
+              ticks: { color: "#ccc" },
+              grid: { color: "#222" }
+            }
+          }
+        }
+      });
+    }
+
+    function renderCharts(records) {
+      destroyCharts();
+
+      const normalized = normalizeRecords(records);
+      const labels = buildLabels(normalized);
+
+      const countData = normalized.map(r => r.count || 0);
+      const depthData = normalized.map(r => Number(r.avgDepth || 0).toFixed(3));
+      const depthLowData = normalized.map(r => r.depthLowCount || 0);
+      const torsoWarnData = normalized.map(r => r.torsoWarningCount || 0);
+
+      countChart = makeLineChart("countChart", "운동 횟수", labels, countData);
+      depthChart = makeLineChart("depthChart", "평균 깊이", labels, depthData);
+      depthLowChart = makeBarChart("depthLowChart", "깊이 부족", labels, depthLowData);
+      torsoWarnChart = makeBarChart("torsoWarnChart", "상체 경고", labels, torsoWarnData);
+    }
+
+    async function loadAllAnalytics() {
+      try {
+        statusEl.textContent = "전체 그래프 불러오는 중...";
+        const res = await fetch(`${API_BASE}/api/workout`);
+        if (!res.ok) throw new Error(`조회 실패: ${res.status}`);
+
+        const data = await res.json();
+        statusEl.textContent = `전체 ${data.length}개의 기록 분석 완료`;
+        updateSummary(data);
+        renderCharts(data);
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = `오류: ${err.message}`;
+        destroyCharts();
+      }
+    }
+
+    async function loadAnalyticsByStudentId(studentId) {
+      try {
+        statusEl.textContent = `${studentId} 학번 그래프 불러오는 중...`;
+        const res = await fetch(`${API_BASE}/api/workout/${studentId}`);
+        if (!res.ok) throw new Error(`조회 실패: ${res.status}`);
+
+        const data = await res.json();
+        statusEl.textContent = `${studentId} 학번 기록 ${data.length}개 분석 완료`;
+        updateSummary(data);
+        renderCharts(data);
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = `오류: ${err.message}`;
+        destroyCharts();
+      }
+    }
+
+    loadAllBtn.addEventListener("click", () => {
+      currentMode = "all";
+      currentStudentId = "";
+      loadAllAnalytics();
+    });
+
+    loadByIdBtn.addEventListener("click", () => {
+      const studentId = studentIdInput.value.trim();
+      if (!studentId) {
+        alert("학번을 입력하세요.");
+        return;
+      }
+      currentMode = "id";
+      currentStudentId = studentId;
+      loadAnalyticsByStudentId(studentId);
+    });
+
+    refreshBtn.addEventListener("click", () => {
+      if (currentMode === "id" && currentStudentId) {
+        loadAnalyticsByStudentId(currentStudentId);
+      } else {
+        loadAllAnalytics();
+      }
+    });
+
+    loadAllAnalytics();
+  </script>
+</body>
+</html>

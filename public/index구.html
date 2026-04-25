@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HEALTH MATE PRO</title>
+  <style>
+    :root {
+      --bg-color: #05070b;
+      --text-color: #ffffff;
+      --muted: #9aa4b2;
+      --card-bg: rgba(20, 20, 24, 0.88);
+      --line: rgba(255, 255, 255, 0.08);
+      --neon-cyan: #1fe4ff;
+      --good: #21e17b;
+      --warn: #ffb020;
+      --bad: #ff5a67;
+    }
+
+    body.light-mode {
+      --bg-color: #eef3f7;
+      --text-color: #111827;
+      --muted: #5b6470;
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --line: rgba(17, 24, 39, 0.08);
+      --neon-cyan: #00c7e6;
+      --good: #16a34a;
+      --warn: #d97706;
+      --bad: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top, rgba(31, 228, 255, 0.08), transparent 35%),
+        radial-gradient(circle at bottom, rgba(31, 228, 255, 0.04), transparent 25%),
+        var(--bg-color);
+    }
+
+    .screen {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .theme-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      border: 1px solid var(--line);
+      background: var(--card-bg);
+      color: var(--text-color);
+      border-radius: 14px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+    }
+
+    .mode-title {
+      margin-bottom: 40px;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      text-align: center;
+      color: var(--text-color);
+    }
+
+    .mode-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+      max-width: 940px;
+      padding: 0 20px;
+    }
+
+    .mode-card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 34px 30px;
+      cursor: pointer;
+      transition: 0.25s ease;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .mode-card:hover {
+      border-color: var(--neon-cyan);
+      transform: translateY(-6px);
+      box-shadow: 0 0 24px rgba(31, 228, 255, 0.18);
+    }
+
+    .mode-card h3 {
+      margin: 0 0 18px;
+      font-size: 26px;
+      color: var(--neon-cyan);
+      text-align: center;
+    }
+
+    .mode-card ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    .student-id-fixed {
+      position: absolute;
+      right: 20px;
+      bottom: 16px;
+      color: #7c8591;
+      font-size: 13px;
+      letter-spacing: 2px;
+    }
+
+    /* APP SCREEN */
+    #app-screen {
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 14px 16px 16px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .app-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .back-btn {
+      border: 1px solid var(--line);
+      background: var(--card-bg);
+      color: var(--text-color);
+      border-radius: 12px;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .brand-mini {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      letter-spacing: 0.5px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 44% 56%;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .left-col,
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .stage-card {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      min-height: 300px;
+    }
+
+    .stat-rail {
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 14px;
+      border-right: 1px solid var(--line);
+      position: relative;
+    }
+
+    .stat-rail::before {
+      content: "";
+      position: absolute;
+      left: 12px;
+      top: 14px;
+      bottom: 14px;
+      width: 5px;
+      border-radius: 999px;
+      background: linear-gradient(to bottom, #ff0066, var(--neon-cyan));
+    }
+
+    .stat-box {
+      padding-left: 18px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      line-height: 1.15;
+    }
+
+    .canvas-stage {
+      position: relative;
+      min-height: 300px;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .canvas-stage video,
+    .canvas-stage canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .bottom-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .panel {
+      padding: 14px 14px 12px;
+      min-height: 165px;
+    }
+
+    .panel h3 {
+      margin: 0 0 12px;
+      color: var(--neon-cyan);
+      font-size: 16px;
+    }
+
+    .radio-group,
+    .input-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .row-inline {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .small-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-color);
+      outline: none;
+      font-size: 14px;
+    }
+
+    label {
+      font-size: 14px;
+      color: var(--text-color);
+    }
+
+    .right-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .three-card {
+      min-height: 280px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .three-status {
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      z-index: 4;
+      color: #d1d5db;
+      font-size: 13px;
+    }
+
+    .save-mini {
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      z-index: 4;
+      color: #d1d5db;
+      font-size: 13px;
+    }
+
+    #threeWrap {
+      width: 100%;
+      height: 100%;
+      min-height: 280px;
+      background: #111;
+    }
+
+    .feedback-card {
+      padding: 14px 16px;
+      min-height: 84px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .feedback-main {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--good);
+      line-height: 1.2;
+    }
+
+    .feedback-detail {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .mini-cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .mini-card {
+      padding: 10px 12px;
+      min-height: 68px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      text-align: left;
+    }
+
+    .mini-label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .mini-value {
+      color: var(--text-color);
+      font-weight: 900;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .bottom-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+      padding-bottom: 8px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .action-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 22px;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      min-width: 150px;
+    }
+
+    .ghost-btn {
+      background: #1f2028;
+      color: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .primary-btn {
+      background: var(--neon-cyan);
+      color: #000;
+    }
+
+    .secondary-btn {
+      background: #20222c;
+      color: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .toggle-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .muted-box {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 1400px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .mini-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 880px) {
+      .mode-container {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-split {
+        grid-template-columns: 1fr;
+      }
+
+      .mini-cards {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .stage-card {
+        grid-template-columns: 1fr;
+      }
+
+      .stat-rail {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .stat-rail::before {
+        display: none;
+      }
+
+      .stat-box {
+        padding-left: 0;
+      }
+
+      .theme-btn {
+        top: 12px;
+        right: 12px;
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button id="themeToggle" class="theme-btn">
+    <span id="theme-icon">🌙</span>
+    <span id="theme-text">DARK MODE</span>
+  </button>
+
+  <!-- MODE SCREEN: 첫 화면 -->
+  <div id="mode-screen" class="screen">
+    <h2 class="mode-title">SELECT INPUT MODE</h2>
+
+    <div class="mode-container">
+      <div class="mode-card" data-mode="webcam">
+        <h3>📷 실시간 웹캠 분석</h3>
+        <ul>
+          <li>웹캠 + YOLO ONNX 실시간 추론</li>
+          <li>MediaPipe Hands 오버레이</li>
+          <li>실시간 피드백 + 3D 아바타 표시</li>
+        </ul>
+      </div>
+
+      <div class="mode-card" data-mode="json">
+        <h3>🎬 JSON / Video 분석</h3>
+        <ul>
+          <li>squat.mp4 + pose_squat.json 동기화</li>
+          <li>발표용 안정 재생</li>
+          <li>세트/횟수/깊이 분석 표시</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="student-id-fixed">STUDENT ID : 2025730082</div>
+  </div>
+
+  <!-- APP SCREEN -->
+  <div id="app-screen" class="screen hidden">
+    <div class="app-topbar">
+      <div class="topbar-left">
+        <button id="backToModeBtn" class="back-btn">← BACK</button>
+        <div class="brand-mini">HEALTH MATE PRO ENGINE</div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <!-- LEFT -->
+      <div class="left-col">
+        <div class="card stage-card">
+          <div class="stat-rail">
+            <div class="stat-box">
+              <div class="stat-label">COUNT</div>
+              <div id="count-val" class="stat-value">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">PROGRESS</div>
+              <div id="progress-val" class="stat-value">0%</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">SET</div>
+              <div id="set-val" class="stat-value">1 / 3</div>
+            </div>
+          </div>
+
+          <div id="canvasStage" class="canvas-stage">
+            <video id="video" playsinline muted></video>
+            <canvas id="canvas"></canvas>
+            <canvas id="overlay"></canvas>
+          </div>
+        </div>
+
+        <div class="bottom-split">
+          <div class="card panel">
+            <h3>입력 / 운동 모드</h3>
+
+            <div class="radio-group">
+              <div class="row-inline">
+                <label><input type="radio" name="inputMode" value="json" checked /> JSON</label>
+                <label><input type="radio" name="inputMode" value="webcam" /> Webcam</label>
+              </div>
+
+              <div class="row-inline">
+                <label><input type="radio" name="workoutMode" value="normal" checked /> Normal</label>
+                <label><input type="radio" name="workoutMode" value="challenge" /> Challenge</label>
+              </div>
+
+              <div class="small-note">
+                Normal: 세트/횟수 목표 진행<br />
+                Challenge: 멈출 때까지 연속 진행
+              </div>
+            </div>
+          </div>
+
+          <div class="card panel">
+            <h3>세트 설정</h3>
+
+            <div class="input-grid">
+              <div>
+                <label for="targetSets">세트 수</label>
+                <input id="targetSets" type="number" min="1" value="3" />
+              </div>
+
+              <div>
+                <label for="setRepTarget">세트당 횟수</label>
+                <input id="setRepTarget" type="number" min="1" value="10" />
+              </div>
+
+              <div>
+                <label for="restSeconds">휴식(초)</label>
+                <input id="restSeconds" type="number" min="0" value="30" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right-col">
+        <div class="card three-card">
+          <div id="analysisStatus" class="three-status">준비 전</div>
+          <div id="saveStatus" class="save-mini">저장 대기</div>
+          <div id="threeWrap"></div>
+        </div>
+
+        <div class="card feedback-card">
+          <div id="feedbackMain" class="feedback-main">대기 중</div>
+          <div id="feedbackDetail" class="feedback-detail">분석 대기 중입니다.</div>
+        </div>
+
+        <div class="mini-cards">
+          <div class="card mini-card">
+            <div class="mini-label">입력 모드</div>
+            <div id="cardInputMode" class="mini-value">JSON</div>
+          </div>
+          <div class="card mini-card">
+            <div class="mini-label">운동 모드</div>
+            <div id="cardMode" class="mini-value">Normal</div>
+          </div>
+          <div class="card mini-card">
+            <div class="mini-label">평균 깊이</div>
+            <div id="cardAvgDepth" class="mini-value">0.000</div>
+          </div>
+          <div class="card mini-card">
+            <div class="mini-label">현재 세트</div>
+            <div id="cardSet" class="mini-value">1 / 3</div>
+          </div>
+          <div class="card mini-card">
+            <div class="mini-label">세트 횟수</div>
+            <div id="cardSetRep" class="mini-value">0 / 10</div>
+          </div>
+          <div class="card mini-card">
+            <div class="mini-label">휴식</div>
+            <div id="cardRest" class="mini-value">-</div>
+          </div>
+          <div class="card mini-card">
+            <div class="mini-label">깊이 부족</div>
+            <div id="cardDepthLow" class="mini-value">0</div>
+          </div>
+          <div class="card mini-card">
+            <div class="mini-label">상체 경고</div>
+            <div id="cardTorsoWarn" class="mini-value">0</div>
+          </div>
+          <div class="card mini-card">
+            <div class="mini-label">속도</div>
+            <div id="cardSpeed" class="mini-value">대기</div>
+          </div>
+          <div class="card mini-card">
+            <div class="mini-label">1회 시간</div>
+            <div id="cardRepTime" class="mini-value">0.00s</div>
+          </div>
+        </div>
+
+        <div class="card panel" style="min-height: 110px;">
+          <h3>제어 / 옵션</h3>
+
+          <div class="row-inline" style="margin-bottom: 10px;">
+            <button id="prepareBtn" class="action-btn secondary-btn" style="min-width: 130px; padding: 10px 16px;">준비하기</button>
+            <button id="runBtn" class="action-btn primary-btn" style="min-width: 130px; padding: 10px 16px;">시작</button>
+            <button id="resetBtn" class="action-btn ghost-btn" style="min-width: 130px; padding: 10px 16px;">초기화</button>
+            <button id="resetBaselineBtn" class="action-btn ghost-btn" style="min-width: 145px; padding: 10px 16px;">기준 리셋</button>
+          </div>
+
+          <div class="toggle-line" style="margin-bottom: 8px;">
+            <label><input id="autoRotate" type="checkbox" checked /> 자동 회전</label>
+            <label><input id="handOverlayToggle" type="checkbox" checked /> 손 오버레이</label>
+          </div>
+
+          <div id="info" class="muted-box">(no data)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-actions">
+      <button id="saveResult" class="action-btn primary-btn">STORE SESSION TO DB</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
