@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Health Mate - Final Pro Master</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-orbit-controls@1.3.2/dist/aframe-orbit-controls.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --danger: #ff4e50;
+            --glass: rgba(15, 20, 25, 0.95);
+            --border: rgba(255, 255, 255, 0.15);
+            --icon-size: 85px; 
+            --cam-icon-size: 130px; 
+            --cyber-glow: 0 0 25px rgba(0, 242, 255, 0.8);
+        }
+
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; color: #fff; }
+
+        /* 🚀 배경 고정 레이어 (1920x1080 비율 박제) */
+        #fixed-background {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: url('org.png'); background-size: 100% 100%;
+            background-position: center bottom; background-repeat: no-repeat; z-index: -100; 
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        /* 🚀 아바타 캔버스 최상단 강제 */
+        canvas.a-canvas { 
+            position: absolute !important; top: 0; left: 0;
+            z-index: 10 !important; background-color: transparent !important;
+        }
+        a-scene { position: absolute !important; top: 0; left: 0; width: 100%; height: 100%; z-index: 5 !important; }
+
+        .ui-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10000; }
+        .clickable { pointer-events: auto; }
+        
+        .main-logo { 
+            position: fixed; top: 30px; left: 40px; font-size: 52px; font-weight: 900; color: var(--primary); 
+            text-shadow: var(--cyber-glow); letter-spacing: -2px; pointer-events: auto;
+        }
+
+        .panel { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--border); border-radius: 30px; }
+        .top-hud { position: fixed; top: 30px; right: 40px; padding: 25px 50px; text-align: center; min-width: 170px; box-shadow: var(--cyber-glow); }
+        #count-num { font-size: 80px; font-weight: bold; color: var(--primary); line-height: 1; }
+        
+        .right-stack { position: fixed; top: 210px; right: 40px; display: flex; flex-direction: column; gap: 25px; align-items: flex-end; }
+        .btn-main { 
+            width: var(--icon-size); height: var(--icon-size); border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            border: 2px solid var(--border); cursor: pointer; color: #fff; background: var(--glass); font-size: 40px; transition: 0.3s;
+        }
+        .btn-main:hover { transform: scale(1.1); border-color: var(--primary); box-shadow: var(--cyber-glow); }
+
+        .cam-container { position: fixed; bottom: 40px; right: 40px; pointer-events: auto; }
+        #cam-btn { width: var(--cam-icon-size); height: var(--cam-icon-size); font-size: 65px; background: var(--glass); border: 4px solid var(--border); }
+        #cam-btn.on { background: var(--danger); border-color: transparent; box-shadow: 0 0 50px rgba(255, 78, 80, 0.7); }
+
+        /* 배경 선택 카드 UI */
+        #bg-panel { top: 200px; width: 460px; }
+        .bg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; padding: 20px; }
+        .bg-card { 
+            position: relative; width: 100%; height: 130px; border-radius: 15px; overflow: hidden;
+            border: 3px solid transparent; cursor: pointer; transition: 0.3s; background-size: cover; background-position: center;
+        }
+        .bg-card.active { border-color: var(--primary); box-shadow: var(--cyber-glow); }
+        .bg-card span { position: absolute; bottom: 0; left: 0; width: 100%; padding: 10px; background: rgba(0,0,0,0.7); font-size: 13px; font-weight: bold; text-align: center; }
+
+        /* 🚀 [해결] 미디어 레이아웃 개별 비율 고정 */
+        #media-group { position: fixed; top: 120px; left: 40px; z-index: 2000000; pointer-events: none; }
+        
+        /* 1. 웹캠 컨테이너: 가로 중심의 콤팩트한 뷰 */
+        #webcam-container { 
+            width: 600px; height: 360px; border-radius: 25px; overflow: hidden; 
+            position: relative; display: none; background: #111; 
+            box-shadow: var(--cyber-glow); border: 3px solid var(--primary); pointer-events: auto;
+            margin-bottom: 30px;
+        }
+
+        /* 2. 가이드 컨테이너: 🚀 세로로 길게 (9:16 스쿼트 영상 최적화) */
+        #guide-container { 
+            width: 350px; height: 620px; border-radius: 25px; overflow: hidden; 
+            position: relative; display: none; background: #111; 
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.4); border: 3px solid #ff00ff; pointer-events: auto;
+        }
+        
+        /* 🚀 영상이 잘리지 않고 컨테이너에 꽉 차게 설정 */
+        video, canvas { width: 100%; height: 100%; object-fit: cover !important; display: block; }
+        #output_canvas { transform: scaleX(-1); position: absolute; top: 0; left: 0; z-index: 50; }
+
+        .close-cam { position: absolute; top: 25px; right: 25px; width: 45px; height: 45px; background: rgba(0,0,0,0.8); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; font-weight: bold; }
+        .side-modal { position: fixed; right: 160px; width: 430px; padding: 35px; display: none; z-index: 10001; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        
+        #history-list { max-height: 450px; overflow-y: auto; }
+        .history-item { padding: 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        #av-sel, #v-sel { width: 100%; padding: 18px; margin-bottom: 20px; background: #1a1a1a; color: #fff; border: 1px solid var(--border); border-radius: 15px; outline: none; }
+        .a-enter-vr { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="fixed-background"></div>
+
+    <a-scene vr-mode-ui="enabled: false" embedded style="background: none;">
+        <a-assets>
+            <video src="squat.mp4" id="m_sq" loop="true" crossorigin="anonymous"></video>
+            <video src="stretching.mp4" id="m_st" loop="true" crossorigin="anonymous"></video>
+            <video src="squat_demo.mp4" id="m_sq_demo" loop="true" crossorigin="anonymous"></video>
+        </a-assets>
+
+        <a-entity id="avatar-wrapper" position="0 -2.8 -6" rotation="0 0 0">
+            <a-gltf-model src="model.glb" id="male" scale="3.8 3.8 3.8"></a-gltf-model>
+        </a-entity>
+
+        <a-entity light="type: ambient; intensity: 1.3"></a-entity>
+        <a-entity light="type: directional; color: #fff; intensity: 1" position="-1 4 3"></a-entity>
+        
+        <a-entity id="main-camera" camera position="0 1.5 10" 
+                  orbit-controls="target: 0 -2.8 -6; enablePan: false; enableZoom: true; rotateSpeed: 2.5; enabled: true">
+        </a-entity>
+    </a-scene>
+
+    <div class="ui-layer">
+        <div class="main-logo" onclick="location.reload()">HEALTH MATE</div>
+        
+        <div class="top-hud panel"><div style="font-size: 16px; color: #aaa; letter-spacing: 4px;">REPS</div><div id="count-num">0</div></div>
+
+        <div class="right-stack clickable">
+            <button id="history-toggle" class="btn-main">📊</button>
+            <button id="bg-toggle" class="btn-main">🖼</button>
+            <button id="setup-toggle" class="btn-main">⚙</button>
+            <button class="btn-main">ℹ</button>
+        </div>
+
+        <div class="cam-container"><button id="cam-btn" class="btn-main clickable">🎥</button></div>
+
+        <div id="bg-panel" class="panel side-modal clickable">
+            <div style="font-size: 20px; color: var(--primary); font-weight: bold; margin-bottom: 25px; border-bottom: 2px solid var(--border); padding-bottom: 15px;">ENVIRONMENT</div>
+            <div class="bg-grid">
+                <div class="bg-card active" style="background-image:url('org.png')" data-bg="org.png"><span>DARK SILENCE</span></div>
+                <div class="bg-card" style="background-image:url('teto.png')" data-bg="teto.png"><span>IRON DISTRICT</span></div>
+                <div class="bg-card" style="background-image:url('astrogen.png')" data-bg="astrogen.png"><span>NEON NEXUS</span></div>
+                <div class="bg-card" style="background-image:url('3d.png')" data-bg="3d.png"><span>CYBER ARENA [3D]</span></div>
+            </div>
+        </div>
+
+        <div id="setup-panel" class="panel side-modal clickable">
+            <div style="color: var(--primary); font-weight: bold; margin-bottom: 25px;">SESSION SETUP</div>
+            <select id="av-sel" class="clickable"></select>
+            <select id="v-sel" class="clickable"></select>
+            <button id="save-btn" class="clickable" style="width:100%; padding:20px; background:var(--primary); border:none; border-radius:15px; font-weight:bold; color:#000;">SAVE SESSION</button>
+        </div>
+
+        <div id="history-panel" class="panel side-modal clickable">
+            <div style="color: var(--primary); font-weight: bold; margin-bottom: 20px;">WORKOUT HISTORY</div>
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+    <div id="media-group">
+        <div id="webcam-container">
+            <div class="close-cam" onclick="closeCamera()">✕</div>
+            <video id="input_video" autoplay playsinline style="display:none"></video>
+            <canvas id="output_canvas"></canvas>
+        </div>
+        <div id="guide-container">
+            <div class="close-cam" onclick="document.getElementById('guide-container').style.display='none'; document.getElementById('guide_player').pause(); activeSrc=null;">✕</div>
+            <video id="guide_player" loop crossorigin="anonymous"></video>
+        </div>
+    </div>
+
+<script type="module">
+    import MediapipeAvatarManager from './src/MediapipeAvatarManager.js'
+    
+    const vid = document.getElementById('input_video'), canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d'), avMgr = new MediapipeAvatarManager();
+
+    // 🚀 아바타 최적화 설정 풀 버전 유지
+    avMgr.setUseHand(true); avMgr.initKalmanFilter(); avMgr.setUseKalmanFilter(true); avMgr.setSlerpRatio(0.15);
+
+    const cBtn = document.getElementById('cam-btn'), cOver = document.getElementById('webcam-container'), gOver = document.getElementById('guide-container'), gPlay = document.getElementById('guide_player');
+    const avEl = document.getElementById('male');
+    
+    let isCam = false, squatCount = 0, isDown = false, avType = 'Mixamo', activeSrc = null;
+
+    window.closeCamera = () => { if (isCam) { cam.stop(); isCam = false; activeSrc = null; cBtn.classList.remove('on'); cOver.style.display = 'none'; } };
+    const toggleModal = (modalId) => {
+        const modal = document.getElementById(modalId);
+        document.querySelectorAll('.side-modal').forEach(m => m.style.display = 'none');
+        modal.style.display = 'block';
+        if(modalId === 'history-panel') updateHistoryUI();
+    };
+
+    document.getElementById('setup-toggle').onclick = () => toggleModal('setup-panel');
+    document.getElementById('history-toggle').onclick = () => toggleModal('history-panel');
+    document.getElementById('bg-toggle').onclick = () => toggleModal('bg-panel');
+
+    document.querySelectorAll('.bg-card').forEach(card => {
+        card.onclick = () => {
+            document.getElementById('fixed-background').style.backgroundImage = `url('${card.dataset.bg}')`;
+            document.querySelectorAll('.bg-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+        };
+    });
+
+    const holistic = new Holistic({ locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${f}` });
+    holistic.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+
+    // 🚀 [마스터 결과 처리] 비율 교정 및 거울모드 해결
+    holistic.onResults((r) => {
+        // 1. 아바타 데이터 (거울 모드 해제: x좌표 반전)
+        if (r.poseLandmarks) {
+            const avatarData = JSON.parse(JSON.stringify(r));
+            const flip = (lm) => { if (lm) lm.forEach(p => { p.x = 1.0 - p.x; }); };
+            flip(avatarData.poseLandmarks); flip(avatarData.faceLandmarks);
+            flip(avatarData.leftHandLandmarks); flip(avatarData.rightHandLandmarks);
+            avMgr.update(avatarData);
+        }
+
+        // 2. 캔버스 드로잉 (웹캠 전용 크기 확보)
+        canvasElement.width = 480; canvasElement.height = 360;
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        canvasCtx.translate(canvasElement.width, 0); canvasCtx.scale(-1, 1); // 사용자 시점 거울모드
+        canvasCtx.drawImage(r.image, 0, 0, canvasElement.width, canvasElement.height);
+        
+        if (r.poseLandmarks) {
+            // 사이버네틱 드로잉 (네온 블루)
+            drawConnectors(canvasCtx, r.poseLandmarks, POSE_CONNECTIONS, {color: '#00f2ff', lineWidth: 4});
+            drawLandmarks(canvasCtx, r.poseLandmarks, {color: '#ff4e50', lineWidth: 1, radius: 3});
+            
+            
+            // 🚀 손가락 좌표 복구
+            if (r.leftHandLandmarks) {
+                drawConnectors(canvasCtx, r.leftHandLandmarks, HAND_CONNECTIONS, {color: '#00f2ff', lineWidth: 2});
+                drawLandmarks(canvasCtx, r.leftHandLandmarks, {color: '#ff4e50', radius: 2});
+            }
+            if (r.rightHandLandmarks) {
+                drawConnectors(canvasCtx, r.rightHandLandmarks, HAND_CONNECTIONS, {color: '#00f2ff', lineWidth: 2});
+                drawLandmarks(canvasCtx, r.rightHandLandmarks, {color: '#ff4e50', radius: 2});
+            }
+            if (r.faceLandmarks) drawConnectors(canvasCtx, r.faceLandmarks, FACEMESH_TESSELATION, {color: '#00f2ff', lineWidth: 0.5});
+
+            const hip = r.poseLandmarks[23].y, knee = r.poseLandmarks[25].y;
+            if (hip > knee - 0.1 && !isDown) isDown = true;
+            else if (hip < knee - 0.2 && isDown) { squatCount++; isDown = false; document.getElementById('count-num').innerText = squatCount; }
+        }
+        canvasCtx.restore();
+    });
+
+    const cam = new Camera(vid, { onFrame: async () => { if (isCam && activeSrc === 'input_video') await holistic.send({ image: vid }); }, width: 640, height: 480 });
+    cBtn.onclick = () => { if (!isCam) { cam.start().then(() => { isCam = true; activeSrc = 'input_video'; cBtn.classList.add('on'); cOver.style.display = 'block'; }); } else { closeCamera(); } };
+
+    document.getElementById('v-sel').onchange = (e) => {
+        const v = e.target.value; if(!v) return;
+        if (isCam) { cam.stop(); isCam = false; cBtn.classList.remove('on'); cOver.style.display = 'none'; }
+        gOver.style.display = 'block'; gPlay.src = document.getElementById(v).src; gPlay.play(); activeSrc = v;
+        const up = async () => { if (activeSrc === v && gPlay.readyState >= 2) { await holistic.send({ image: gPlay }); gPlay.requestVideoFrameCallback(up); } };
+        gPlay.requestVideoFrameCallback(up);
+    };
+
+    document.getElementById('save-btn').onclick = async () => { 
+        await fetch('/api/squat/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ count: squatCount }) }); 
+        squatCount = 0; document.getElementById('count-num').innerText = 0; updateHistoryUI(); toggleModal('setup-panel');
+    };
+
+    avEl.addEventListener('model-loaded', function() { avMgr.bindAvatar(this.getObject3D('mesh'), avType); });
+    const avS = document.getElementById('av-sel'), models = [{n:'Avaturn Custom', v:'model.glb|Mixamo'}, {n:'Male (Mixamo)', v:'boy.glb|Mixamo'}, {n:'Female (Mixamo)', v:'girl.glb|Mixamo'}, {n:'Main (RPM)', v:'main.glb|RPM'}];
+    models.forEach(m => { const o = document.createElement('option'); o.value = m.v; o.innerText = m.n; avS.appendChild(o); });
+    avS.onchange = (e) => { const [s, t] = e.target.value.split('|'); avType = t; avEl.setAttribute('src', s); };
+
+    const vS = document.getElementById('v-sel'), vOpts = [{n:'-- Guide Selection --', v:''}, {n:'Squat', v:'m_sq'}, {n:'Stretching', v:'m_st'}, {n:'Squat Demo', v:'m_sq_demo'}];
+    vOpts.forEach(o => { const op = document.createElement('option'); op.value = o.v; op.innerText = o.n; vS.appendChild(op); });
+
+    async function updateHistoryUI() {
+        try {
+            const res = await fetch('/api/squat/history'); const data = await res.json();
+            const list = document.getElementById('history-list'); list.innerHTML = data.length === 0 ? "<div style='color:#555; padding:20px;'>No history.</div>" : "";
+            data.forEach(item => { const div = document.createElement('div'); div.className = 'history-item'; div.innerHTML = `<span>${new Date(item.timestamp).toLocaleTimeString()}</span> <strong style="color:var(--primary)">${item.count} Reps</strong>`; list.appendChild(div); });
+        } catch (e) { }
+    }
+</script>
+</body>
+</html>
