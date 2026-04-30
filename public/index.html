@@ -2,158 +2,185 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HEALTH MATE PRO - Integrated</title>
+    <title>HEALTH MATE PRO</title>
     <style>
-        :root { --neon-cyan: #00FFFB; --neon-pink: #ff004c; --bg-color: #050505; --card-bg: rgba(255,255,255,0.07); --text-color: #ffffff; }
-        body.light-mode { --bg-color: #f4f7f6; --card-bg: rgba(0,0,0,0.06); --text-color: #1a1a2e; }
-        body { margin: 0; background: var(--bg-color); color: var(--text-color); font-family: 'Pretendard', sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; transition: 0.3s; }
-        .theme-toggle { position: fixed; top: 15px; right: 15px; z-index: 10000; background: var(--card-bg); border: 1px solid #444; color: var(--text-color); padding: 10px 15px; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(10px); }
-        .user-id-fixed { position: fixed; bottom: 15px; right: 20px; z-index: 10000; font-size: 12px; font-family: monospace; color: #777; letter-spacing: 1px; }
-        .screen { position: absolute; width: 100%; height: 100vh; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .hidden { opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(10px); }
-        #home-screen { background: radial-gradient(circle at center, var(--bg-color) 0%, #000 100%); }
-        .logo-img { width: 180px; height: 180px; border-radius: 50%; border: 3px solid var(--neon-cyan); box-shadow: 0 0 30px var(--neon-cyan); margin-bottom: 25px; }
-        h1.brand-name { font-size: 45px; font-weight: 900; margin: 0 0 45px 0; background: linear-gradient(to bottom, #fff, #999); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; width: 100%; max-width: 700px; padding: 0 20px; box-sizing: border-box; }
-        .nav-card { background: var(--card-bg); border: 1px solid #333; padding: 35px; border-radius: 22px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .nav-card:hover { border-color: var(--neon-cyan); transform: translateY(-7px); }
-        .view-pane { flex: 1; position: relative; border-radius: 22px; background: #000; border: 1px solid #333; overflow: hidden; }
-        video, canvas { position: absolute; width: 100%; height: 100%; object-fit: contain; }
-        .data-overlay { position: absolute; top: 20px; left: 20px; z-index: 100; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 15px; border-left: 5px solid var(--neon-pink); }
-        .stat-val { font-size: 30px; font-weight: 900; color: var(--neon-cyan); margin-bottom: 12px; }
-        .footer-ctrl { width: 100%; padding: 20px; background: var(--bg-color); display: flex; justify-content: center; border-top: 1px solid #333; position: fixed; bottom: 0; }
-        .save-btn { padding: 13px 80px; border: none; border-radius: 40px; background: var(--neon-cyan); color: #000; font-weight: 900; font-size: 17px; cursor: pointer; }
+        :root { --neon-cyan: #00FFFB; --neon-pink: #ff004c; --bg: #050505; --card-bg: rgba(255,255,255,0.06); }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); color: white; font-family: 'Pretendard', sans-serif; overflow: hidden; }
+
+        /* [STEP 1] 메인 홈 */
+        #home-screen {
+            position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; background: #000; z-index: 1000; transition: 0.6s;
+        }
+        .logo-img { width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--neon-cyan); box-shadow: 0 0 30px var(--neon-cyan); margin-bottom: 30px; }
+        .menu-row { display: flex; gap: 30px; }
+        .menu-card {
+            background: var(--card-bg); border: 1px solid #333; padding: 40px; border-radius: 25px;
+            width: 320px; text-align: center; cursor: pointer; transition: 0.3s;
+        }
+        .menu-card:hover { border-color: var(--neon-cyan); transform: translateY(-10px); }
+
+        /* [STEP 2] 2단계 세부 선택 */
+        #sub-select-screen {
+            position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; background: radial-gradient(circle, #111 0%, #000 100%);
+            z-index: 900; transition: 0.5s;
+        }
+
+        /* [STEP 3] 최종 분석 모드 */
+        #analysis-screen { display: flex; flex-direction: column; width: 100%; height: 100vh; padding: 25px; box-sizing: border-box; }
+        .view-container { display: flex; flex: 1; gap: 20px; margin-top: 15px; }
+        .view-pane { flex: 1; position: relative; background: #000; border: 1px solid #222; border-radius: 30px; overflow: hidden; }
+        
+        canvas, video { position: absolute; width: 100%; height: 100%; object-fit: contain; }
+        .count-badge { position: absolute; top: 25px; left: 25px; z-index: 100; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 15px; border-left: 6px solid var(--neon-cyan); }
+        
+        .btn-back { padding: 12px 30px; background: none; border: 1px solid #555; color: #888; border-radius: 30px; cursor: pointer; font-weight: bold; }
+        .btn-save { padding: 18px 100px; background: var(--neon-cyan); color: #000; font-weight: 900; border: none; border-radius: 40px; cursor: pointer; box-shadow: 0 0 30px var(--neon-cyan); }
+
+        .hidden { display: none !important; opacity: 0; }
     </style>
 </head>
 <body>
-    <button class="theme-toggle" onclick="window.toggleTheme()">
-        <span id="theme-icon">🌙</span> <span id="theme-text">DARK MODE</span>
-    </button>
-    <div class="user-id-fixed">STUDENT ID: 2025730082</div>
 
-    <div id="home-screen" class="screen">
-        <img src="healthmate_logo.png" alt="Logo" class="logo-img">
-        <h1 class="brand-name">HEALTH MATE</h1>
-        <div class="menu-grid">
-            <div class="nav-card" onclick="window.showModeSelect()"><h3>⚡ AI 분석</h3></div>
-            <div class="nav-card" onclick="alert('준비 중!')"><h3>📖 가이드</h3></div>
-        </div>
-    </div>
-
-    <div id="mode-screen" class="screen hidden">
-        <div style="display:flex; gap:20px;">
-            <div class="nav-card" onclick="window.startApp('webcam')"><h3>📷 웹캠</h3></div>
-            <div class="nav-card" onclick="window.startApp('video')"><h3>🎬 영상</h3></div>
-        </div>
-        <button onclick="window.goHome()" style="margin-top:20px; color:#999; cursor:pointer; background:none; border:none; text-decoration:underline;">BACK</button>
-    </div>
-
-    <div id="app-screen" class="screen hidden" style="justify-content: flex-start;">
-        <header style="width:100%; padding:20px; border-bottom:1px solid #333;">
-            <button onclick="window.backToMode()" style="background:#333; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">← BACK</button>
-        </header>
-        <div style="display:flex; flex:1; width:100%; padding:20px; gap:20px; box-sizing:border-box;">
-            <div class="view-pane">
-                <div class="data-overlay">
-                    <div style="font-size:10px; color:#888;">COUNT</div>
-                    <div id="count-val" class="stat-val">0</div>
-                    <div id="progress-val" class="stat-val">0%</div>
-                </div>
-                <video id="webcam" autoplay muted playsinline style="display:none;"></video>
-                <canvas id="output-canvas"></canvas>
+    <div id="home-screen">
+        <img src="/healthmate_logo.png" class="logo-img">
+        <h1 style="text-shadow: 0 0 10px var(--neon-cyan);">HEALTH MATE PRO</h1>
+        <div class="menu-row">
+            <div class="menu-card" onclick="navToSub()">
+                <h2 style="color: var(--neon-cyan);">⚡ AI 실시간 분석</h2>
+                <p>내 몸의 움직임을 실시간으로 분석하여<br>아바타와 동기화합니다.</p>
             </div>
-            <div class="view-pane" id="avatar-pane"></div>
+            <div class="menu-card" onclick="alert('📖 정석 가이드는 준비 중입니다!')">
+                <h2 style="color: var(--neon-pink);">📖 초심자 정석 가이드</h2>
+                <p>전문가의 스쿼트 영상을 분석합니다.</p>
+            </div>
         </div>
-        <footer class="footer-ctrl"><button class="save-btn" id="btn-save">STORE SESSION</button></footer>
+    </div>
+
+    <div id="sub-select-screen" class="hidden">
+        <button class="btn-back" style="position:absolute; top:40px; right:40px;" onclick="navToHome()">BACK</button>
+        <h2 style="color: var(--neon-pink); margin-bottom: 50px;">분석 모드를 선택하세요</h2>
+        <div class="menu-row" style="flex-direction: column;">
+            <div class="menu-card" style="width: 400px;" onclick="startAnalysis('realtime')"><h3>실시간 캠 분석</h3></div>
+            <div class="menu-card" style="width: 400px; margin-top: 20px;" onclick="startAnalysis('video')"><h3>정석 영상 분석</h3></div>
+        </div>
+    </div>
+
+    <div id="analysis-screen" class="hidden">
+        <header style="display:flex; justify-content:space-between; align-items:center;">
+            <button class="btn-back" onclick="navToSub()">← BACK</button>
+            <div id="mode-title" style="font-weight:900; color:var(--neon-pink);">SQUAT ANALYSIS</div>
+            <div style="width:100px;"></div>
+        </header>
+        <div class="view-container">
+            <div class="view-pane">
+                <div class="count-badge"><div id="count-num" style="font-size:45px; font-weight:900; color:var(--neon-cyan);">0</div></div>
+                <video id="input-video" autoplay muted playsinline style="display:none;"></video>
+                <canvas id="yolo-canvas"></canvas>
+            </div>
+            <div class="view-pane" id="avatar-container"></div>
+        </div>
+        <div style="text-align:center; padding-top:20px;">
+            <button class="btn-save" onclick="saveToDB()">SAVE TO MONGODB</button>
+        </div>
     </div>
 
     <script type="module">
         import * as THREE from 'https://cdn.skypack.dev/three@0.132.2';
         import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/loaders/GLTFLoader.js';
-        import { OrbitControls } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/controls/OrbitControls.js';
 
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('output-canvas');
+        let scene, camera, renderer, mixer, squatAction, squatClip, yoloWorker;
+        let count = 0, isDown = false, hipBase = 0;
+        let currentMode = '';
+
+        const video = document.getElementById('input-video');
+        const canvas = document.getElementById('yolo-canvas');
         const ctx = canvas.getContext('2d');
-        let scene, camera, renderer, avatar, controls, requestID, yoloWorker;
-        let squatCount = 0, isDown = false, initialHipY = 0;
 
-        // [핵심] 세정님 워커 연결
-        function initWorker() {
-            if (yoloWorker) return;
-            yoloWorker = new Worker(new URL("./yoloWorker.js", import.meta.url), { type: "module" });
-            yoloWorker.postMessage({ type: "init", payload: { modelUrl: "./models/yolo_pose.onnx" } });
+        window.navToSub = () => { document.getElementById('home-screen').classList.add('hidden'); document.getElementById('sub-select-screen').classList.remove('hidden'); };
+        window.navToHome = () => { document.getElementById('sub-select-screen').classList.add('hidden'); document.getElementById('home-screen').classList.remove('hidden'); };
+
+        window.startAnalysis = async (mode) => {
+            currentMode = mode;
+            document.getElementById('sub-select-screen').classList.add('hidden');
+            document.getElementById('analysis-screen').classList.remove('hidden');
+            initThree();
+            initAI();
+            if (mode === 'realtime') {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } else {
+                video.srcObject = null; video.src = "/squat.mp4"; video.loop = true; video.play();
+            }
+        };
+
+        function initThree() {
+            const container = document.getElementById('avatar-container');
+            container.innerHTML = '';
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth/container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 1.5, 3.5);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+            const loader = new GLTFLoader();
+            loader.load('/models/Untitled_gym.glb', (g) => scene.add(g.scene));
+            loader.load('/models/Untitled_squat.glb', (g) => {
+                const avatar = g.scene; avatar.position.set(0, 0, 0.5); scene.add(avatar);
+                mixer = new THREE.AnimationMixer(avatar);
+                squatClip = g.animations[0];
+                squatAction = mixer.clipAction(squatClip);
+                squatAction.play(); squatAction.paused = true;
+            });
+            function anim() { requestAnimationFrame(anim); renderer.render(scene, camera); }
+            anim();
+        }
+
+        function initAI() {
+            yoloWorker = new Worker(new URL("/src/yoloWorker.js", import.meta.url), { type: "module" });
+            yoloWorker.postMessage({ type: "init", payload: { modelUrl: "/models/yolo_pose.onnx" } });
             yoloWorker.onmessage = (e) => {
                 if (e.data.type === "inferResult" && e.data.payload.ok) {
-                    processPose(e.data.payload.kpts);
+                    processFrame(e.data.payload.kpts);
                 }
             };
+            setInterval(() => {
+                if (video.readyState >= 2) {
+                    const tmp = document.createElement('canvas');
+                    tmp.width = video.videoWidth; tmp.height = video.videoHeight;
+                    tmp.getContext('2d').drawImage(video, 0, 0);
+                    yoloWorker.postMessage({ type: "infer", payload: { imageData: tmp.getContext('2d').getImageData(0,0,tmp.width,tmp.height), width: tmp.width, height: tmp.height }});
+                }
+            }, 100);
         }
 
-        function processPose(kpts) {
+        function processFrame(kpts) {
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
             const pts = kpts.map(p => ({ x: p.x, y: p.y, v: p.s > 0.3 }));
             if (pts[11].v && pts[12].v) {
-                const h = (pts[11].y + pts[12].y) / 2;
-                if (initialHipY === 0 || h < initialHipY) initialHipY = h;
-                let p = Math.max(0, Math.min(1, (h - initialHipY) / 85));
-                document.getElementById('progress-val').innerText = Math.round(p * 100) + "%";
-                if (avatar) {
-                    avatar.position.y = -p * 0.45;
+                const hipY = (pts[11].y + pts[12].y) / 2;
+                if (hipBase === 0) hipBase = hipY;
+                let progress = Math.max(0, Math.min(1, (hipY - hipBase) / 85));
+                if (squatAction) {
+                    squatAction.time = squatClip.duration * progress * 0.45;
+                    mixer.update(0.01);
                 }
-                if (p > 0.75 && !isDown) isDown = true;
-                if (p < 0.25 && isDown) { isDown = false; squatCount++; document.getElementById('count-val').innerText = squatCount; }
+                if (progress > 0.8 && !isDown) isDown = true;
+                if (progress < 0.2 && isDown) { isDown = false; count++; document.getElementById('count-num').innerText = count; }
             }
-            drawSkeleton(pts);
-        }
-
-        async function captureFrame() {
-            if (document.getElementById('app-screen').classList.contains('hidden')) return;
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            const tCanvas = document.createElement('canvas');
-            tCanvas.width = video.videoWidth; tCanvas.height = video.videoHeight;
-            const tCtx = tCanvas.getContext('2d');
-            tCtx.drawImage(video, 0, 0);
-            yoloWorker.postMessage({ type: "infer", payload: { imageData: tCtx.getImageData(0,0,canvas.width,canvas.height), width: canvas.width, height: canvas.height }});
-            requestID = requestAnimationFrame(captureFrame);
-        }
-
-        function drawSkeleton(pts) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            ctx.lineWidth = 5; ctx.strokeStyle = "#00FFFB";
-            [[5,6],[5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16]].forEach(([s, e]) => {
+            ctx.strokeStyle = "#00FFFB"; ctx.lineWidth = 6;
+            [[5,6],[11,12],[11,13],[13,15],[12,14],[14,16]].forEach(([s, e]) => {
                 if (pts[s]?.v && pts[e]?.v) { ctx.beginPath(); ctx.moveTo(pts[s].x, pts[s].y); ctx.lineTo(pts[e].x, pts[e].y); ctx.stroke(); }
             });
         }
 
-        window.showModeSelect = () => { document.getElementById('home-screen').classList.add('hidden'); document.getElementById('mode-screen').classList.remove('hidden'); };
-        window.goHome = () => { document.getElementById('mode-screen').classList.add('hidden'); document.getElementById('home-screen').classList.remove('hidden'); };
-        window.startApp = async (type) => {
-            initWorker();
-            document.getElementById('mode-screen').classList.add('hidden'); document.getElementById('app-screen').classList.remove('hidden');
-            if (type === 'webcam') {
-                video.srcObject = await navigator.mediaDevices.getUserMedia({ video: true });
-            } else { video.src = "./squat.mp4"; }
-            video.onloadedmetadata = () => captureFrame();
-        };
-
-        window.backToMode = () => { location.reload(); };
-
-        // [중요] 인용님 KST 저장 로직
-        document.getElementById('btn-save').onclick = async () => {
-            const now = new Date();
-            const kstTime = new Intl.DateTimeFormat('ko-KR', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit',
-                hour12: false, timeZone: 'Asia/Seoul'
-            }).format(now).replace(/\. /g, '-').replace('.', '');
-
-            const payload = { studentId: "2025730082", name: "Jeong In-yong", count: squatCount, kst_time: kstTime };
-            await fetch('http://localhost:3000/api/workout', { 
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) 
-            });
-            alert(`정인용 님, 저장 완료! (${kstTime})`);
+        window.saveToDB = async () => {
+            const kst = new Date().toLocaleString("ko-KR", {timeZone: "Asia/Seoul"});
+            await fetch('/api/workout', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ studentId: "2025730082", count: count, kst_time: kst, mode: currentMode }) });
+            alert("DB 저장 완료!");
         };
     </script>
 </body>
