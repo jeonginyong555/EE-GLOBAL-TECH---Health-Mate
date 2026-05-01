@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HEALTH MATE PRO</title>
+  <style>
+    :root {
+      --bg-color: #05070b;
+      --bg-elev: rgba(20, 20, 24, 0.88);
+      --bg-soft: rgba(255, 255, 255, 0.04);
+      --text-color: #ffffff;
+      --muted: #9aa4b2;
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(255, 255, 255, 0.14);
+      --neon-cyan: #1fe4ff;
+      --danger: #ff5a67;
+      --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.32);
+      --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.24);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
+
+    body.light-mode {
+      --bg-color: #eef3f7;
+      --bg-elev: rgba(255, 255, 255, 0.92);
+      --bg-soft: rgba(17, 24, 39, 0.04);
+      --text-color: #111827;
+      --muted: #5b6470;
+      --line: rgba(17, 24, 39, 0.08);
+      --line-strong: rgba(17, 24, 39, 0.14);
+      --neon-cyan: #00c7e6;
+      --shadow-lg: 0 18px 34px rgba(17, 24, 39, 0.12);
+      --shadow-md: 0 10px 24px rgba(17, 24, 39, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top, rgba(31, 228, 255, 0.08), transparent 35%),
+        radial-gradient(circle at bottom, rgba(31, 228, 255, 0.04), transparent 25%),
+        var(--bg-color);
+    }
+
+    .hidden {
+      display: none !important;
+      pointer-events: none !important;
+    }
+
+    .screen {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    #mode-screen {
+      z-index: 20;
+      overflow: hidden;
+      padding: 20px;
+    }
+
+    #app-screen {
+      padding: 14px 16px 16px;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .theme-btn {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+      color: var(--text-color);
+      border-radius: 16px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 800;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .home-frame {
+      width: min(1180px, calc(100vw - 52px));
+      height: min(760px, calc(100vh - 52px));
+      margin: auto;
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-lg);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow: hidden;
+    }
+
+    .wizard-page {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .page-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      flex-shrink: 0;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      color: var(--neon-cyan);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+
+    .title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .home-title {
+      margin: 0;
+      font-size: clamp(44px, 5vw, 72px);
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -0.045em;
+      max-width: 900px;
+    }
+
+    .home-title .accent {
+      color: var(--neon-cyan);
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 34px;
+      font-weight: 900;
+      line-height: 1.05;
+      color: var(--neon-cyan);
+      letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      max-width: 64ch;
+    }
+
+    .page-back-btn {
+      border: 1px solid var(--line);
+      background: rgba(10, 12, 18, 0.56);
+      color: var(--text-color);
+      border-radius: 14px;
+      padding: 11px 16px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .home-content {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: stretch;
+      gap: 14px;
+    }
+
+    .home-main-actions {
+      flex: 1;
+      width: 100%;
+      display: grid;
+      grid-template-rows: 1.45fr 1fr auto;
+      gap: 14px;
+    }
+
+    .primary-start-btn {
+      border: 1px solid rgba(31, 228, 255, 0.34);
+      background: linear-gradient(135deg, rgba(31, 228, 255, 0.22), rgba(31, 228, 255, 0.06));
+      color: var(--text-color);
+      border-radius: 24px;
+      padding: 30px;
+      cursor: pointer;
+      text-align: left;
+      min-height: 150px;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .primary-start-btn:hover,
+    .quick-btn:hover,
+    .mode-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(31, 228, 255, 0.55);
+      box-shadow: 0 0 26px rgba(31, 228, 255, 0.16);
+    }
+
+    .primary-start-icon {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .primary-start-title {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      margin-bottom: 8px;
+    }
+
+    .primary-start-text {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .quick-btn {
+      border: 1px solid var(--line);
+      background: rgba(10, 12, 18, 0.50);
+      color: var(--text-color);
+      border-radius: 20px;
+      padding: 22px;
+      cursor: pointer;
+      text-align: left;
+      min-height: 110px;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .quick-icon {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .quick-title {
+      font-size: 16px;
+      font-weight: 900;
+      margin-bottom: 5px;
+    }
+
+    .quick-text {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .home-footnote {
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .student-id-fixed {
+      color: #7c8591;
+      font-size: 12px;
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+
+    .mode-grid {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .mode-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 26px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      text-align: left;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+
+    .mode-icon {
+      width: 76px;
+      height: 76px;
+      border-radius: 22px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      background: rgba(31, 228, 255, 0.10);
+      font-size: 36px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .mode-card h3 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      color: var(--neon-cyan);
+      font-weight: 900;
+    }
+
+    .mode-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+      word-break: keep-all;
+    }
+
+    .mode-tag {
+      display: inline-flex;
+      margin-top: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(31, 228, 255, 0.22);
+      color: var(--neon-cyan);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .setup-page {
+      overflow: hidden;
+    }
+
+    .setup-body {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .setup-body.no-preview {
+      grid-template-columns: 1fr;
+    }
+
+    .preview-column {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-height: 0;
+    }
+
+    .preview-box {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(10, 12, 18, 0.44);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .preview-box img {
+      width: 100%;
+      height: 190px;
+      object-fit: contain;
+      border-radius: 14px;
+      background: #111;
+      padding: 6px;
+      display: block;
+    }
+
+    .preview-name {
+      font-size: 17px;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .preview-caption {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .setup-panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(10, 12, 18, 0.44);
+      padding: 22px;
+      min-height: 0;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .setup-title-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .selected-chip {
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(31, 228, 255, 0.10);
+      border: 1px solid rgba(31, 228, 255, 0.24);
+      color: var(--neon-cyan);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .setup-title-text {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .setup-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      word-break: keep-all;
+    }
+
+    .setup-row,
+    .setup-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .setup-label {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .setup-select,
+    .setup-input {
+      width: 100%;
+      min-width: 0;
+      height: 46px;
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line-strong);
+      background: var(--bg-elev);
+      color: var(--text-color);
+      font-size: 13px;
+      font-weight: 800;
+      outline: none;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+    }
+
+    .setup-select:focus,
+    .setup-input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 3px rgba(31, 228, 255, 0.12);
+    }
+
+    .setup-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .setup-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .guide-card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .guide-card-title {
+      color: var(--text-color);
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+
+    #setup-feedback {
+      justify-content: stretch;
+    }
+
+    #setup-feedback .guide-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 26px;
+    }
+
+    #setup-feedback .guide-card-title {
+      font-size: 24px;
+      margin-bottom: 14px;
+      color: var(--neon-cyan);
+    }
+
+    #setup-feedback .setup-note {
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .challenge-info {
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255, 90, 103, 0.08);
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .challenge-badge {
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 90, 103, 0.16);
+      color: #ff7b88;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .challenge-title {
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .challenge-text {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .enter-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: auto;
+      padding-top: 8px;
+    }
+
+    .enter-btn {
+      border: none;
+      border-radius: 16px;
+      padding: 15px 24px;
+      background: var(--neon-cyan);
+      color: #000;
+      font-weight: 900;
+      cursor: pointer;
+      font-size: 15px;
+      box-shadow: 0 0 22px rgba(31, 228, 255, 0.18);
+    }
+
+    .mode-proxy-container {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .app-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .back-btn {
+      border: 1px solid var(--line);
+      background: var(--bg-elev);
+      color: var(--text-color);
+      border-radius: 12px;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .brand-mini {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      letter-spacing: 0.5px;
+    }
+
+    .main-grid {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+    }
+
+    .viewer-card {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      padding: 12px;
+    }
+
+    .viewer-stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      background: #05070b;
+      border-radius: 16px;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .stage-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      background: transparent;
+    }
+
+    #webcamStage {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: none;
+      background: #000;
+      overflow: hidden;
+    }
+
+    #webcamStage > video,
+    #webcamStage > canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    #video {
+      z-index: 0;
+      background: #000;
+      opacity: 0;
+    }
+
+    #canvas {
+      z-index: 1;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    #overlay {
+      z-index: 2;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    #guideStage {
+      z-index: 4;
+      display: none;
+      background: #000;
+      overflow: hidden;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    #guideCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #000;
+      pointer-events: none;
+    }
+
+    .hidden-video {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      left: -9999px !important;
+      top: -9999px !important;
+    }
+
+    #threeWrap {
+      z-index: 5;
+      background: #0d1117;
+      display: none;
+      pointer-events: auto;
+      cursor: pointer;
+    }
+
+    #threeWrap canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+
+    .stage-main {
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    .stage-pip {
+      inset: auto 18px 86px auto !important;
+      width: 220px !important;
+      height: 300px !important;
+      border-radius: 18px !important;
+      overflow: hidden !important;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: #000;
+    }
+
+    .stage-pip::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12);
+      pointer-events: none;
+    }
+
+    .floating-chip {
+      position: absolute;
+      z-index: 20;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(10, 12, 18, 0.65);
+      color: #fff;
+      backdrop-filter: blur(8px);
+      font-size: 14px;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    #modeChip { top: 12px; left: 12px; }
+    #statusChip { top: 12px; right: 12px; }
+    #gestureChip { bottom: 12px; right: 12px; color: var(--neon-cyan); }
+
+    #helpChip {
+      bottom: 12px;
+      left: 12px;
+      max-width: 56%;
+      line-height: 1.4;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .counter-chip {
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 88px;
+      text-align: center;
+      font-size: 34px;
+      font-weight: 900;
+      color: #ffffff;
+      background: rgba(0, 0, 0, 0.32);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      padding: 10px 22px;
+      box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.26),
+        0 0 18px rgba(31, 228, 255, 0.16);
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+      z-index: 30;
+      transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+      opacity: 0.96;
+    }
+
+    .counter-chip.pop {
+      transform: translateX(-50%) scale(1.12);
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.32),
+        0 0 26px rgba(31, 228, 255, 0.30);
+    }
+
+    body.light-mode .counter-chip {
+      background: rgba(255, 255, 255, 0.62);
+      color: #111827;
+      border: 1px solid rgba(17, 24, 39, 0.08);
+    }
+
+    .center-alert {
+      position: absolute;
+      left: 50%;
+      top: 84px;
+      transform: translateX(-50%) scale(0.96);
+      z-index: 35;
+      min-width: 320px;
+      max-width: min(76vw, 560px);
+      padding: 18px 22px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(10, 12, 18, 0.88);
+      color: #fff;
+      text-align: center;
+      backdrop-filter: blur(14px);
+      box-shadow:
+        0 18px 40px rgba(0,0,0,0.34),
+        0 0 24px rgba(31, 228, 255, 0.12);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .center-alert.show {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    .center-alert.good {
+      border-color: rgba(33, 225, 123, 0.38);
+      background: rgba(33, 225, 123, 0.18);
+    }
+
+    .center-alert.warn {
+      border-color: rgba(255, 176, 32, 0.38);
+      background: rgba(255, 176, 32, 0.18);
+    }
+
+    .center-alert.bad {
+      border-color: rgba(255, 90, 103, 0.38);
+      background: rgba(255, 90, 103, 0.18);
+    }
+
+    .center-alert.missing {
+      border-color: rgba(57, 160, 255, 0.38);
+      background: rgba(57, 160, 255, 0.18);
+    }
+
+    .center-alert-title {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 6px;
+    }
+
+    .center-alert-text {
+      font-size: 15px;
+      line-height: 1.45;
+      color: rgba(255,255,255,0.94);
+      word-break: keep-all;
+    }
+
+    .feedback-toast-wrap {
+      position: absolute;
+      top: 72px;
+      right: 14px;
+      z-index: 28;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: min(360px, calc(100% - 28px));
+      pointer-events: none;
+    }
+
+    .feedback-toast {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      color: #fff;
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.28);
+      animation: toastIn 0.22s ease;
+      opacity: 0.98;
+    }
+
+    .feedback-toast.good {
+      background: rgba(33, 225, 123, 0.18);
+      border-color: rgba(33, 225, 123, 0.35);
+    }
+
+    .feedback-toast.warn {
+      background: rgba(255, 176, 32, 0.18);
+      border-color: rgba(255, 176, 32, 0.35);
+    }
+
+    .feedback-toast.bad {
+      background: rgba(255, 90, 103, 0.18);
+      border-color: rgba(255, 90, 103, 0.35);
+    }
+
+    .feedback-toast.missing {
+      background: rgba(57, 160, 255, 0.18);
+      border-color: rgba(57, 160, 255, 0.18);
+    }
+
+    .feedback-toast-icon {
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 900;
+      background: rgba(255,255,255,0.14);
+    }
+
+    .feedback-toast-body {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .feedback-toast-title {
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .feedback-toast-text {
+      font-size: 13px;
+      line-height: 1.45;
+      color: rgba(255,255,255,0.92);
+      word-break: keep-all;
+    }
+
+    .feedback-toast.hide {
+      animation: toastOut 0.20s ease forwards;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+      to { opacity: 0.98; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes toastOut {
+      from { opacity: 0.98; transform: translateY(0) scale(1); }
+      to { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    }
+
+    .control-panel {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      z-index: 21;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: rgba(10, 12, 18, 0.56);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 10px;
+      backdrop-filter: blur(10px);
+    }
+
+    .action-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .primary-btn {
+      background: var(--neon-cyan);
+      color: #000;
+    }
+
+    .ghost-btn {
+      background: #20222c;
+      color: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .control-inline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 0 6px;
+      user-select: none;
+    }
+
+    .pip-settings-btn {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index: 32;
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 50%;
+      background: rgba(10, 12, 18, 0.78);
+      color: #fff;
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 21px;
+      font-weight: 900;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+    }
+
+    .pip-settings-panel {
+      position: absolute;
+      right: 18px;
+      bottom: 74px;
+      z-index: 33;
+      min-width: 220px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(10, 12, 18, 0.92);
+      color: #fff;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.34);
+    }
+
+    .pip-settings-title {
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--neon-cyan);
+      margin-bottom: 12px;
+      letter-spacing: 0.3px;
+    }
+
+    .pip-settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      user-select: none;
+    }
+
+    .pip-settings-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--neon-cyan);
+      flex-shrink: 0;
+    }
+
+    .user-info-panel {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 6px;
+      z-index: 200;
+      pointer-events: auto;
+    }
+
+    .user-info-input {
+      width: 130px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(10, 12, 18, 0.72);
+      color: #fff;
+      padding: 0 10px;
+      font-size: 13px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    .user-info-input::placeholder {
+      color: rgba(255,255,255,0.45);
+    }
+
+    @media (max-height: 760px) {
+      .home-frame {
+        width: min(1120px, calc(100vw - 52px));
+        height: min(660px, calc(100vh - 52px));
+        padding: 24px;
+      }
+
+      .home-title {
+        font-size: clamp(38px, 4.4vw, 60px);
+      }
+
+      .primary-start-btn {
+        min-height: 124px;
+        padding: 24px;
+      }
+
+      .quick-btn {
+        min-height: 92px;
+        padding: 18px;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      #mode-screen {
+        overflow-y: auto;
+      }
+
+      .home-frame {
+        height: auto;
+        min-height: calc(100vh - 52px);
+        overflow: visible;
+      }
+
+      .setup-body,
+      .setup-body.no-preview {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-column {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .preview-box {
+        flex: 1 1 220px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      #mode-screen {
+        padding: 18px;
+      }
+
+      .home-frame {
+        width: calc(100vw - 36px);
+        min-height: calc(100vh - 36px);
+        padding: 22px;
+        border-radius: 22px;
+      }
+
+      .home-title {
+        font-size: 42px;
+      }
+
+      .quick-grid,
+      .setup-grid-2,
+      .setup-grid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .page-topbar {
+        flex-direction: column;
+      }
+
+      .page-back-btn {
+        width: fit-content;
+      }
+
+      .mode-card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+    /* 운동 화면에서 상단 기능 숨김 모드 */
+body.clean-video-ui #saveRecordBtn,
+body.clean-video-ui #openRecordsBtn,
+body.clean-video-ui #openAnalyticsBtn,
+body.clean-video-ui #openRecordingsBtn,
+body.clean-video-ui #userInfoPanel,
+body.clean-video-ui .brand-mini {
+  display: none !important;
+}
+
+/* BACK은 왼쪽에 유지 */
+body.clean-video-ui #backBtn {
+  display: inline-flex !important;
+}
+
+/* 다크모드는 BACK이랑 안 겹치게 오른쪽 위 고정 */
+body.clean-video-ui #themeToggle {
+  position: fixed !important;
+  top: 18px !important;
+  right: 22px !important;
+  z-index: 300 !important;
+}
+
+/* 상단바는 BACK 자리만 남김 */
+body.clean-video-ui .app-topbar {
+  height: 58px;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  padding-right: 190px;
+}
+
+body.clean-video-ui .topbar-left {
+  gap: 0;
+}
+  </style>
+</head>
+<body>
+  <button id="themeToggle" class="theme-btn">🌙 DARK MODE</button>
+
+  <div id="mode-screen" class="screen">
+    <main class="home-frame">
+      <section id="homePage" class="wizard-page">
+        <div class="page-topbar">
+          <div class="title-wrap">
+            <div class="badge">HEALTH MATE PRO</div>
+            <h1 class="home-title">
+              운동을 더 직관적으로,<br />
+              <span class="accent">HEALTH MATE</span>와 함께
+            </h1>
+            <p class="page-subtitle">
+              모드를 선택하고 필요한 설정만 진행한 뒤 운동 화면으로 입장합니다.
+              기록과 분석 페이지도 홈에서 바로 확인할 수 있습니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="home-content">
+          <div class="home-main-actions">
+            <button id="startWorkoutBtn" class="primary-start-btn" type="button">
+              <div class="primary-start-icon">🏋️</div>
+              <div class="primary-start-title">운동 시작</div>
+              <div class="primary-start-text">모드 선택 후 필요한 설정만 진행합니다.</div>
+            </button>
+
+            <div class="quick-grid">
+              <button id="modeRecordsBtn" class="quick-btn" type="button">
+                <div class="quick-icon">📋</div>
+                <div class="quick-title">운동 기록</div>
+                <div class="quick-text">저장된 기록과 세션 결과를 확인합니다.</div>
+              </button>
+
+              <button id="modeAnalyticsBtn" class="quick-btn" type="button">
+                <div class="quick-icon">📊</div>
+                <div class="quick-title">운동 분석</div>
+                <div class="quick-text">운동량과 변화 흐름을 그래프로 확인합니다.</div>
+              </button>
+            </div>
+
+            <div class="home-footnote">
+              <span>Ready for squat session</span>
+              <span class="student-id-fixed">STUDENT ID : 2025730079</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="modePage" class="wizard-page hidden">
+        <div class="page-topbar">
+          <div>
+            <div class="badge">MODE SELECT</div>
+            <h2 class="page-title">운동 모드를 선택하세요</h2>
+            <p class="page-subtitle">모드마다 필요한 설정이 다르기 때문에 다음 화면에서 해당 모드에 맞는 설정만 보여줍니다.</p>
+          </div>
+          <button id="modeBackBtn" class="page-back-btn" type="button">← 홈으로</button>
+        </div>
+
+        <div class="mode-grid">
+          <button class="mode-card" type="button" data-select-mode="standard">
+            <div class="mode-icon">🎬</div>
+            <div>
+              <h3>가이드 운동</h3>
+              <p>아바타와 기준 영상을 보며 정석 스쿼트 동작을 확인하는 모드입니다.</p>
+              <span class="mode-tag">아바타 + 스쿼트 영상</span>
+            </div>
+          </button>
+
+          <button class="mode-card" type="button" data-select-mode="feedback">
+            <div class="mode-icon">📷</div>
+            <div>
+              <h3>자세 교정</h3>
+              <p>웹캠과 기준 영상을 비교하며 실시간 자세 피드백을 받는 모드입니다.</p>
+              <span class="mode-tag">영상 + 웹캠</span>
+            </div>
+          </button>
+
+          <button class="mode-card" type="button" data-select-mode="avatar">
+            <div class="mode-icon">🧍</div>
+            <div>
+              <h3>동작 따라하기</h3>
+              <p>Mixamo 기준 애니메이션과 웹캠을 함께 사용해 운동 흐름을 보는 모드입니다.</p>
+              <span class="mode-tag">Mixamo + 웹캠 + 세트</span>
+            </div>
+          </button>
+
+          <button class="mode-card" type="button" data-select-mode="retarget">
+            <div class="mode-icon">🦾</div>
+            <div>
+              <h3>자유 측정</h3>
+              <p>내 움직임 또는 선택 영상을 리타게팅 아바타에 반영해 확인하는 모드입니다.</p>
+              <span class="mode-tag">리타게팅 아바타 + 입력 선택</span>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <section id="setupPage" class="wizard-page setup-page hidden">
+        <div class="page-topbar">
+          <div>
+            <div id="selectedModeChip" class="badge">선택 모드: -</div>
+            <h2 class="page-title">운동 설정</h2>
+            <p id="setupPageSubtitle" class="page-subtitle">선택한 모드에 필요한 항목만 조정한 뒤 입장하세요.</p>
+          </div>
+          <button id="setupBackBtn" class="page-back-btn" type="button">← 모드 선택</button>
+        </div>
+
+        <div id="setupBody" class="setup-body">
+          <div id="previewColumn" class="preview-column">
+            <div id="avatarPreviewBox" class="preview-box">
+              <img id="avatarPreviewImage" src="/images/avatar_default.png" alt="아바타 미리보기" />
+              <div id="avatarPreviewName" class="preview-name">기본 RPM</div>
+              <div id="avatarPreviewCaption" class="preview-caption">현재 선택된 아바타 미리보기</div>
+            </div>
+
+            <div id="gymPreviewBox" class="preview-box">
+              <img id="gymPreviewImage" src="/images/Untitled_gym.png" alt="헬스장 미리보기" />
+              <div id="gymPreviewName" class="preview-name">gym1</div>
+              <div class="preview-caption">현재 선택된 헬스장 미리보기</div>
+            </div>
+          </div>
+
+          <div id="setup-standard" class="setup-panel hidden">
+            <div class="setup-title-line">
+              <div class="setup-title-text">가이드 운동 설정</div>
+              <span class="selected-chip">아바타 + 스쿼트 영상</span>
+            </div>
+
+            <p class="setup-note">
+              가이드 운동은 스쿼트 기준 영상으로 고정됩니다. 세트 수는 사용하지 않고, 기준 아바타와 스쿼트 영상을 보며 정석 동작을 확인합니다.
+            </p>
+
+            <div class="setup-row">
+              <label for="avatarSelect" class="setup-label">AVATAR SELECT</label>
+              <select id="avatarSelect" class="setup-select">
+                <option value="default">기본 RPM</option>
+                <option value="vroid1">VRoid 1</option>
+                <option value="vroid2">VRoid 2</option>
+                <option value="vroid3">VRoid 3</option>
+                <option value="vroid4">VRoid 4</option>
+              </select>
+            </div>
+
+            <div class="setup-row">
+              <label for="gymSelect" class="setup-label">헬스장 배경</label>
+              <select id="gymSelect" class="setup-select">
+                <option value="gym1">gym1</option>
+                <option value="gym2">gym2</option>
+                <option value="gym3">gym3</option>
+                <option value="gym4">gym4</option>
+                <option value="cyber">Cyber Fitness</option>
+                <option value="ptzone">PT Zone</option>
+                <option value="darkroom">Dark Room</option>
+                <option value="brickgym">Brick Gym</option>
+              </select>
+            </div>
+
+            <div class="enter-row">
+              <button class="enter-btn" type="button" data-enter-mode="standard">입장하기 →</button>
+            </div>
+          </div>
+
+          <div id="setup-feedback" class="setup-panel hidden">
+            <div class="setup-title-line">
+              <div class="setup-title-text">자세 교정 설정</div>
+              <span class="selected-chip">영상 + 웹캠</span>
+            </div>
+
+            <div class="guide-card">
+              <div class="guide-card-title">자세 교정 안내</div>
+              <p class="setup-note">
+                이 모드는 기준 영상과 웹캠을 동시에 사용합니다.
+                별도의 아바타, 헬스장, 세트 수 설정 없이 바로 자세 비교가 진행됩니다.
+                카메라 권한을 허용하고 전신이 화면에 들어오도록 위치를 맞춘 뒤 입장하세요.
+              </p>
+            </div>
+
+            <div class="enter-row">
+              <button class="enter-btn" type="button" data-enter-mode="feedback">입장하기 →</button>
+            </div>
+          </div>
+
+          <div id="setup-avatar" class="setup-panel hidden">
+            <div class="setup-title-line">
+              <div class="setup-title-text">동작 따라하기 설정</div>
+              <span class="selected-chip">Mixamo + 웹캠 + 세트</span>
+            </div>
+
+            <p class="setup-note">
+              기준 애니메이션과 내 자세를 함께 확인합니다. 이 모드에서만 세트 수, 횟수, 휴식 시간을 사용합니다.
+            </p>
+
+            <div class="setup-grid-2">
+              <div class="setup-row">
+                <label for="avatarModeAvatarSelect" class="setup-label">AVATAR SELECT</label>
+                <select id="avatarModeAvatarSelect" class="setup-select">
+                  <option value="default">기본 RPM</option>
+                  <option value="vroid1">VRoid 1</option>
+                  <option value="vroid2">VRoid 2</option>
+                  <option value="vroid3">VRoid 3</option>
+                  <option value="vroid4">VRoid 4</option>
+                </select>
+              </div>
+
+              <div class="setup-row">
+                <label for="avatarModeGymSelect" class="setup-label">헬스장 배경</label>
+                <select id="avatarModeGymSelect" class="setup-select">
+                  <option value="gym1">gym1</option>
+                  <option value="gym2">gym2</option>
+                  <option value="gym3">gym3</option>
+                  <option value="gym4">gym4</option>
+                  <option value="cyber">Cyber Fitness</option>
+                  <option value="ptzone">PT Zone</option>
+                  <option value="darkroom">Dark Room</option>
+                  <option value="brickgym">Brick Gym</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="setup-row">
+              <label for="workoutTypeSelect" class="setup-label">운동 타입</label>
+              <select id="workoutTypeSelect" class="setup-select">
+                <option value="normal">노말 모드</option>
+                <option value="challenge">챌린지 모드</option>
+              </select>
+            </div>
+
+            <div id="normalWorkoutSettings" class="setup-grid-3">
+              <div class="setup-field">
+                <label for="setCountInput" class="setup-label">세트 수</label>
+                <input id="setCountInput" class="setup-input" type="number" min="1" max="20" value="3" />
+              </div>
+
+              <div class="setup-field">
+                <label for="repCountInput" class="setup-label">세트당 횟수</label>
+                <input id="repCountInput" class="setup-input" type="number" min="1" max="100" value="10" />
+              </div>
+
+              <div class="setup-field">
+                <label for="restSecondsInput" class="setup-label">휴식 시간(초)</label>
+                <input id="restSecondsInput" class="setup-input" type="number" min="0" max="600" value="30" />
+              </div>
+            </div>
+
+            <div id="challengeWorkoutSettings" class="challenge-info hidden">
+              <div class="challenge-badge">CHALLENGE</div>
+              <div class="challenge-title">논스톱 스쿼트 챌린지</div>
+              <div class="challenge-text">
+                한 번의 스쿼트를 <b>10초 안에</b> 완료해야 하며, 중간 휴식 없이 연속으로 진행합니다.
+              </div>
+            </div>
+
+            <div class="enter-row">
+              <button class="enter-btn" type="button" data-enter-mode="avatar">입장하기 →</button>
+            </div>
+          </div>
+
+          <div id="setup-retarget" class="setup-panel hidden">
+  <div class="setup-title-line">
+    <div class="setup-title-text">자유 측정 설정</div>
+    <span class="selected-chip">리타게팅 아바타 + 입력 선택</span>
+  </div>
+
+  <p class="setup-note">
+    리타게팅 가능한 아바타와 입력 방식을 선택합니다.
+    스쿼트/스트레칭은 영상 확인용이며, 자유 측정은 웹캠을 사용합니다.
+  </p>
+
+  <div class="setup-grid-2">
+  <div class="setup-row">
+    <label for="retargetAvatarSelect" class="setup-label">리타게팅 아바타</label>
+    <select id="retargetAvatarSelect" class="setup-select">
+      <option value="model.glb|Mixamo">Avaturn Custom / Mixamo</option>
+      <option value="boy.glb|Mixamo">Male / Mixamo</option>
+      <option value="girl.glb|Mixamo">Female / Mixamo</option>
+      <option value="main.glb|RPM">Main / RPM</option>
+    </select>
+  </div>
+
+  <div class="setup-row">
+    <label for="retargetExerciseSelect" class="setup-label">입력 선택</label>
+    <select id="retargetExerciseSelect" class="setup-select">
+      <option value="squat">스쿼트 영상</option>
+      <option value="stretching">스트레칭 영상</option>
+      <option value="free">자유 측정 웹캠</option>
+    </select>
+  </div>
+</div>
+
+<div class="setup-row">
+  <label for="retargetGymSelect" class="setup-label">헬스장 배경</label>
+  <select id="retargetGymSelect" class="setup-select">
+    <option value="gym1">gym1</option>
+    <option value="gym2">gym2</option>
+    <option value="gym3">gym3</option>
+    <option value="gym4">gym4</option>
+    <option value="cyber">Cyber Fitness</option>
+    <option value="ptzone">PT Zone</option>
+    <option value="darkroom">Dark Room</option>
+    <option value="brickgym">Brick Gym</option>
+  </select>
+</div>
+
+  <div id="retargetWebcamSettings" class="setup-grid-3 hidden">
+    <div class="setup-field">
+      <label for="retargetSetCountInput" class="setup-label">세트 수</label>
+      <input id="retargetSetCountInput" class="setup-input" type="number" min="1" max="20" value="3" />
+    </div>
+
+    <div class="setup-field">
+      <label for="retargetRepCountInput" class="setup-label">세트당 횟수</label>
+      <input id="retargetRepCountInput" class="setup-input" type="number" min="1" max="100" value="10" />
+    </div>
+
+    <div class="setup-field">
+      <label for="retargetRestSecondsInput" class="setup-label">휴식 시간(초)</label>
+      <input id="retargetRestSecondsInput" class="setup-input" type="number" min="0" max="600" value="30" />
+    </div>
+  </div>
+
+  <div id="retargetWebcamModeSettings" class="setup-row hidden">
+    <label for="retargetWorkoutTypeSelect" class="setup-label">운동 모드</label>
+    <select id="retargetWorkoutTypeSelect" class="setup-select">
+      <option value="normal">노말 모드</option>
+      <option value="challenge">챌린지 모드</option>
+    </select>
+  </div>
+
+  <div class="guide-card">
+    <div class="guide-card-title">입력 연결 안내</div>
+    <p id="retargetInputGuideText" class="setup-note">
+      스쿼트 선택 시 스쿼트 영상, 스트레칭 선택 시 스트레칭 영상, 자유 측정 선택 시 웹캠이 사용됩니다.
+    </p>
+  </div>
+
+  <div class="enter-row">
+    <button class="enter-btn" type="button" data-enter-mode="retarget">입장하기 →</button>
+  </div>
+</div>
+        </div>
+      </section>
+
+      <div class="mode-proxy-container">
+        <div class="mode-card" data-mode="standard"></div>
+        <div class="mode-card" data-mode="feedback"></div>
+        <div class="mode-card" data-mode="avatar"></div>
+        <div class="mode-card" data-mode="retarget"></div>
+
+        <select id="standardGuideVideoSelect">
+          <option value="squat.mp4">Squat</option>
+        </select>
+
+        <select id="retargetVideoSelect">
+          <option value="">웹캠 사용</option>
+          <option value="squat2.mp4">Squat 영상</option>
+          <option value="stretching.mp4">Stretching 영상</option>
+        </select>
+      </div>
+    </main>
+  </div>
+
+  <div id="app-screen" class="screen hidden">
+    <div class="app-topbar">
+      <div class="topbar-left">
+        <button id="backBtn" class="back-btn">← BACK</button>
+        <div class="brand-mini">HEALTH MATE PRO ENGINE</div>
+
+        <button id="saveRecordBtn" class="back-btn" type="button">💾 SAVE</button>
+        <button id="openRecordsBtn" class="back-btn" type="button">📋 RECORDS</button>
+        <button id="openAnalyticsBtn" class="back-btn" type="button">📊 ANALYTICS</button>
+        <button id="openRecordingsBtn" class="back-btn" type="button">🎥 VIDEOS</button>
+
+        <div id="userInfoPanel" class="user-info-panel">
+          <input id="studentIdInput" class="user-info-input" type="text" placeholder="학번 입력" />
+          <input id="userNameInput" class="user-info-input" type="text" placeholder="이름 입력" />
+        </div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="viewer-card">
+        <div id="viewerStage" class="viewer-stage">
+          <div id="webcamStage" class="stage-layer">
+            <video id="video" class="stage-layer" playsinline muted></video>
+            <canvas id="canvas" class="stage-layer"></canvas>
+            <canvas id="overlay" class="stage-layer"></canvas>
+          </div>
+
+          <div id="guideStage" class="stage-layer">
+            <canvas id="guideCanvas" class="stage-layer"></canvas>
+            <video id="guideVideo" playsinline muted loop class="hidden-video"></video>
+          </div>
+
+          <div id="threeWrap" class="stage-layer"></div>
+
+          <div id="modeChip" class="floating-chip">MODE</div>
+          <div id="statusChip" class="floating-chip">READY</div>
+          <div id="helpChip" class="floating-chip">설정 대기 중</div>
+          <div id="gestureChip" class="floating-chip">GESTURE: -</div>
+          <div id="counterChip" class="floating-chip counter-chip hidden">0</div>
+
+          <div id="centerAlert" class="center-alert hidden">
+            <div id="centerAlertTitle" class="center-alert-title">알림</div>
+            <div id="centerAlertText" class="center-alert-text">내용</div>
+          </div>
+
+          <div id="feedbackToastWrap" class="feedback-toast-wrap"></div>
+
+          <button id="pipSettingsBtn" class="pip-settings-btn" type="button" aria-label="PIP 설정">
+            ⚙
+          </button>
+
+          <div id="pipSettingsPanel" class="pip-settings-panel hidden">
+            <div class="pip-settings-title">PIP 설정</div>
+
+            <div class="pip-settings-row">
+              <span id="pipToggleLabel">서브 화면 표시</span>
+              <input id="pipVisibleToggle" type="checkbox" />
+            </div>
+
+            <div id="feedbackWebcamOverlayToggleRow" class="pip-settings-row hidden">
+              <span>웹캠 오버레이</span>
+              <input id="feedbackWebcamOverlayToggle" type="checkbox" checked />
+            </div>
+
+            <div id="feedbackGuideOverlayToggleRow" class="pip-settings-row hidden">
+              <span>영상 오버레이</span>
+              <input id="feedbackGuideOverlayToggle" type="checkbox" checked />
+            </div>
+
+            <div id="avatarFistToggleRow" class="pip-settings-row hidden">
+              <span>주먹 전환</span>
+              <input id="avatarFistToggle" type="checkbox" checked />
+            </div>
+
+            <div id="avatarKnifeToggleRow" class="pip-settings-row hidden">
+              <span>손날 회전</span>
+              <input id="avatarKnifeToggle" type="checkbox" checked />
+            </div>
+
+            <div id="avatarOverlayToggleRow" class="pip-settings-row hidden">
+              <span>관절 오버레이</span>
+              <input id="avatarOverlayToggle" type="checkbox" checked />
+            </div>
+
+            <div id="avatarMarkerToggleRow" class="pip-settings-row hidden">
+              <span>마커 표시</span>
+              <input id="avatarMarkerToggle" type="checkbox" checked />
+            </div>
+          </div>
+
+          <div class="control-panel">
+            <button id="manualToggleBtn" class="action-btn primary-btn">수동 전환</button>
+            <button id="restartBtn" class="action-btn ghost-btn">재시작</button>
+            <button id="recordAvatarBtn" class="action-btn ghost-btn hidden" type="button">⏺ REC</button>
+            <label class="control-inline">
+              <input id="cameraRotateToggle" type="checkbox" />
+              자동 카메라 회전
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const homePage = document.getElementById("homePage");
+      const modePage = document.getElementById("modePage");
+      const setupPage = document.getElementById("setupPage");
+      const setupBody = document.getElementById("setupBody");
+
+      const startWorkoutBtn = document.getElementById("startWorkoutBtn");
+      const modeBackBtn = document.getElementById("modeBackBtn");
+      const setupBackBtn = document.getElementById("setupBackBtn");
+
+      const selectedModeChip = document.getElementById("selectedModeChip");
+      const setupPageSubtitle = document.getElementById("setupPageSubtitle");
+
+      const previewColumn = document.getElementById("previewColumn");
+      const avatarPreviewBox = document.getElementById("avatarPreviewBox");
+      const gymPreviewBox = document.getElementById("gymPreviewBox");
+      const avatarPreviewImage = document.getElementById("avatarPreviewImage");
+      const avatarPreviewName = document.getElementById("avatarPreviewName");
+      const avatarPreviewCaption = document.getElementById("avatarPreviewCaption");
+      const gymPreviewImage = document.getElementById("gymPreviewImage");
+      const gymPreviewName = document.getElementById("gymPreviewName");
+
+      const pages = { home: homePage, mode: modePage, setup: setupPage };
+
+      const modeMeta = {
+        standard: {
+          label: "가이드 운동",
+          subtitle: "스쿼트 기준 영상은 고정입니다. 아바타와 헬스장 배경만 선택합니다.",
+          showAvatarPreview: true,
+          showGymPreview: true,
+        },
+        feedback: {
+          label: "자세 교정",
+          subtitle: "영상과 웹캠을 바로 사용합니다. 별도 선택지는 없습니다.",
+          showAvatarPreview: false,
+          showGymPreview: false,
+        },
+        avatar: {
+          label: "동작 따라하기",
+          subtitle: "기존 아바타, 세트 수, 횟수, 휴식 시간을 설정합니다.",
+          showAvatarPreview: true,
+          showGymPreview: true,
+        },
+        retarget: {
+          label: "자유 측정",
+          subtitle: "리타게팅 아바타, 운동 선택, 세트 및 모드를 설정합니다.",
+          showAvatarPreview: true,
+          showGymPreview: true,
+        },
+      };
+
+      const avatarPreviewMap = {
+        default: { name: "기본 RPM", img: "/images/avatar_default.png" },
+        vroid1: { name: "VRoid 1", img: "/images/avatar_vroid1.png" },
+        vroid2: { name: "VRoid 2", img: "/images/avatar_vroid2.png" },
+        vroid3: { name: "VRoid 3", img: "/images/avatar_vroid3.png" },
+        vroid4: { name: "VRoid 4", img: "/images/avatar_vroid4.png" },
+      };
+
+      const gymPreviewMap = {
+        gym1: { name: "gym1", img: "/images/Untitled_gym.png" },
+        gym2: { name: "gym2", img: "/images/Untitled_gym2.png" },
+        gym3: { name: "gym3", img: "/images/Untitled_gym3.png" },
+        gym4: { name: "gym4", img: "/images/Untitled_gym4.png" },
+        cyber: { name: "Cyber Fitness", img: "/images/3d.png" },
+        ptzone: { name: "PT Zone", img: "/images/astrogen.png" },
+        darkroom: { name: "Dark Room", img: "/images/org.png" },
+        brickgym: { name: "Brick Gym", img: "/images/teto.png" },
+      };
+
+      const retargetPreviewMap = {
+        "model.glb|Mixamo": { name: "Avaturn Custom", img: "/images/model.png" },
+        "boy.glb|Mixamo": { name: "Male / Mixamo", img: "/images/boy.png" },
+        "girl.glb|Mixamo": { name: "Female / Mixamo", img: "/images/girl.png" },
+        "main.glb|RPM": { name: "Main / RPM", img: "/images/main.png" },
+      };
+
+      let selectedMode = null;
+
+      function showPage(pageName) {
+        Object.entries(pages).forEach(([name, el]) => {
+          el.classList.toggle("hidden", name !== pageName);
+        });
+      }
+
+      function hideAllSetupPanels() {
+        document.querySelectorAll(".setup-panel").forEach((el) => el.classList.add("hidden"));
+      }
+
+      function showSetupForMode(mode) {
+        selectedMode = mode;
+        const meta = modeMeta[mode];
+
+        selectedModeChip.textContent = `선택 모드: ${meta.label}`;
+        setupPageSubtitle.textContent = meta.subtitle;
+
+        hideAllSetupPanels();
+
+        const panel = document.getElementById(`setup-${mode}`);
+        if (panel) panel.classList.remove("hidden");
+
+        const noPreview = !meta.showAvatarPreview && !meta.showGymPreview;
+        setupBody.classList.toggle("no-preview", noPreview);
+        previewColumn.classList.toggle("hidden", noPreview);
+        avatarPreviewBox.classList.toggle("hidden", !meta.showAvatarPreview);
+        gymPreviewBox.classList.toggle("hidden", !meta.showGymPreview);
+
+        if (mode === "retarget") {
+          updateRetargetPreview();
+          avatarPreviewCaption.textContent = "현재 선택된 리타게팅 아바타";
+          syncRetargetInputByExercise();
+        } else {
+          syncAvatarPreviewFromSelect(getCurrentAvatarSelect());
+          avatarPreviewCaption.textContent = "현재 선택된 아바타 미리보기";
+        }
+
+        syncGymPreviewFromSelect(getCurrentGymSelect());
+        showPage("setup");
+      }
+
+      function getCurrentAvatarSelect() {
+        if (selectedMode === "avatar") return document.getElementById("avatarModeAvatarSelect");
+        return document.getElementById("avatarSelect");
+      }
+
+      function getCurrentGymSelect() {
+  if (selectedMode === "avatar") return document.getElementById("avatarModeGymSelect");
+  if (selectedMode === "retarget") return document.getElementById("retargetGymSelect");
+  return document.getElementById("gymSelect");
+}
+
+      function syncAvatarPreviewFromSelect(selectEl) {
+        if (!selectEl) return;
+        const data = avatarPreviewMap[selectEl.value] || avatarPreviewMap.default;
+        avatarPreviewImage.src = data.img;
+        avatarPreviewName.textContent = data.name;
+      }
+
+      function syncGymPreviewFromSelect(selectEl) {
+        if (!selectEl) return;
+        const data = gymPreviewMap[selectEl.value] || gymPreviewMap.gym1;
+        gymPreviewImage.src = data.img;
+        gymPreviewName.textContent = data.name;
+      }
+
+      function updateRetargetPreview() {
+        const selectEl = document.getElementById("retargetAvatarSelect");
+        const data = retargetPreviewMap[selectEl.value] || retargetPreviewMap["model.glb|Mixamo"];
+        avatarPreviewImage.src = data.img;
+        avatarPreviewName.textContent = data.name;
+      }
+
+      function mirrorValue(sourceId, targetId) {
+        const source = document.getElementById(sourceId);
+        const target = document.getElementById(targetId);
+        if (!source || !target) return;
+        target.value = source.value;
+        target.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+
+      function syncRetargetInputByExercise() {
+  const exercise = document.getElementById("retargetExerciseSelect")?.value;
+  const videoSelect = document.getElementById("retargetVideoSelect");
+  const guideText = document.getElementById("retargetInputGuideText");
+  const webcamSettings = document.getElementById("retargetWebcamSettings");
+  const webcamModeSettings = document.getElementById("retargetWebcamModeSettings");
+
+  if (!videoSelect) return;
+
+  const isWebcam = exercise === "free";
+
+  webcamSettings?.classList.toggle("hidden", !isWebcam);
+  webcamModeSettings?.classList.toggle("hidden", !isWebcam);
+
+  if (exercise === "free") {
+    videoSelect.value = "";
+    if (guideText) guideText.textContent = "자유 측정은 웹캠 입력을 사용합니다. 오버레이와 피드백이 활성화됩니다.";
+  }
+
+  if (exercise === "squat") {
+    videoSelect.value = "squat2.mp4";
+    if (guideText) guideText.textContent = "스쿼트 영상은 확인용 영상입니다. 오버레이와 피드백은 표시하지 않습니다.";
+  }
+
+  if (exercise === "stretching") {
+    videoSelect.value = "stretching.mp4";
+    if (guideText) guideText.textContent = "스트레칭 영상은 확인용 영상입니다. 오버레이와 피드백은 표시하지 않습니다.";
+  }
+
+  videoSelect.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+      function applyModeSettingsBeforeEnter(mode) {
+        if (mode === "standard") {
+          const standardVideo = document.getElementById("standardGuideVideoSelect");
+          if (standardVideo) {
+            standardVideo.value = "squat.mp4";
+            standardVideo.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+        }
+
+        if (mode === "avatar") {
+          mirrorValue("avatarModeAvatarSelect", "avatarSelect");
+          mirrorValue("avatarModeGymSelect", "gymSelect");
+        }
+
+        if (mode === "retarget") {
+          mirrorValue("retargetGymSelect", "gymSelect");
+  syncRetargetInputByExercise();
+
+  const exercise = document.getElementById("retargetExerciseSelect")?.value;
+  const isVideoInput = exercise !== "free";
+
+  window.HEALTH_MATE_RETARGET_VIDEO_ONLY = isVideoInput;
+window.HEALTH_MATE_RETARGET_HIDE_VIDEO_OVERLAY = isVideoInput;
+window.HEALTH_MATE_RETARGET_DISABLE_FEEDBACK = isVideoInput;
+window.HEALTH_MATE_RETARGET_HIDE_MARKERS = isVideoInput;
+
+  const setSource = document.getElementById("retargetSetCountInput");
+  const repSource = document.getElementById("retargetRepCountInput");
+  const restSource = document.getElementById("retargetRestSecondsInput");
+  const typeSource = document.getElementById("retargetWorkoutTypeSelect");
+
+  const setTarget = document.getElementById("setCountInput");
+  const repTarget = document.getElementById("repCountInput");
+  const restTarget = document.getElementById("restSecondsInput");
+  const typeTarget = document.getElementById("workoutTypeSelect");
+
+  if (exercise === "free") {
+    if (setSource && setTarget) setTarget.value = setSource.value;
+    if (repSource && repTarget) repTarget.value = repSource.value;
+    if (restSource && restTarget) restTarget.value = restSource.value;
+    if (typeSource && typeTarget) typeTarget.value = typeSource.value;
+
+    setTarget?.dispatchEvent(new Event("change", { bubbles: true }));
+    repTarget?.dispatchEvent(new Event("change", { bubbles: true }));
+    restTarget?.dispatchEvent(new Event("change", { bubbles: true }));
+    typeTarget?.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+      }
+
+      function enterMode(mode) {
+  applyModeSettingsBeforeEnter(mode);
+
+  const topbar = document.querySelector(".app-topbar");
+  const exercise = document.getElementById("retargetExerciseSelect")?.value;
+
+  const hideTopbar =
+    mode === "standard" ||
+    (mode === "retarget" && exercise !== "free");
+
+  if (topbar) {
+    topbar.style.display = hideTopbar ? "none" : "flex";
+  }
+
+  const proxy = document.querySelector(`.mode-proxy-container .mode-card[data-mode="${mode}"]`);
+  if (proxy) proxy.click();
+}
+
+      startWorkoutBtn?.addEventListener("click", () => showPage("mode"));
+      modeBackBtn?.addEventListener("click", () => showPage("home"));
+      setupBackBtn?.addEventListener("click", () => showPage("mode"));
+
+      document.querySelectorAll("[data-select-mode]").forEach((card) => {
+        card.addEventListener("click", () => {
+          showSetupForMode(card.dataset.selectMode);
+        });
+      });
+
+      document.querySelectorAll("[data-enter-mode]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          enterMode(btn.dataset.enterMode);
+        });
+      });
+
+      document.getElementById("avatarSelect")?.addEventListener("change", (e) => {
+        if (selectedMode === "standard") syncAvatarPreviewFromSelect(e.target);
+      });
+
+      document.getElementById("gymSelect")?.addEventListener("change", (e) => {
+        if (selectedMode === "standard") syncGymPreviewFromSelect(e.target);
+      });
+
+      document.getElementById("avatarModeAvatarSelect")?.addEventListener("change", (e) => {
+        if (selectedMode === "avatar") syncAvatarPreviewFromSelect(e.target);
+      });
+
+      document.getElementById("avatarModeGymSelect")?.addEventListener("change", (e) => {
+        if (selectedMode === "avatar") syncGymPreviewFromSelect(e.target);
+      });
+
+      document.getElementById("retargetAvatarSelect")?.addEventListener("change", () => {
+        if (selectedMode === "retarget") updateRetargetPreview();
+      });
+
+      document.getElementById("retargetExerciseSelect")?.addEventListener("change", () => {
+        if (selectedMode === "retarget") syncRetargetInputByExercise();
+      });
+
+      document.getElementById("retargetGymSelect")?.addEventListener("change", (e) => {
+  if (selectedMode === "retarget") syncGymPreviewFromSelect(e.target);
+});
+
+      const workoutTypeSelect = document.getElementById("workoutTypeSelect");
+      const normalWorkoutSettings = document.getElementById("normalWorkoutSettings");
+      const challengeWorkoutSettings = document.getElementById("challengeWorkoutSettings");
+
+      workoutTypeSelect?.addEventListener("change", () => {
+        const isChallenge = workoutTypeSelect.value === "challenge";
+        normalWorkoutSettings?.classList.toggle("hidden", isChallenge);
+        challengeWorkoutSettings?.classList.toggle("hidden", !isChallenge);
+      });
+
+      const retargetWorkoutTypeSelect = document.getElementById("retargetWorkoutTypeSelect");
+      const retargetChallengeInfo = document.getElementById("retargetChallengeInfo");
+
+      retargetWorkoutTypeSelect?.addEventListener("change", () => {
+        const isChallenge = retargetWorkoutTypeSelect.value === "challenge";
+        retargetChallengeInfo?.classList.toggle("hidden", !isChallenge);
+      });
+
+      const bridgeClick = (fromId, toId) => {
+        const from = document.getElementById(fromId);
+        const to = document.getElementById(toId);
+        from?.addEventListener("click", () => to?.click());
+      };
+
+      bridgeClick("modeRecordsBtn", "openRecordsBtn");
+      bridgeClick("modeAnalyticsBtn", "openAnalyticsBtn");
+
+      showPage("home");
+    })();
+  </script>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
