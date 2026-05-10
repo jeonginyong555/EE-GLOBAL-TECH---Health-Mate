@@ -216,8 +216,22 @@ const dom = {
   gymSelect: document.getElementById("gymSelect"),
   gymPreviewImage: document.getElementById("gymPreviewImage"),
   gymPreviewName: document.getElementById("gymPreviewName"),
+  runtimeAvatarSelect: document.getElementById("runtimeAvatarSelect"),
+runtimeGymSelect: document.getElementById("runtimeGymSelect"),
+runtimeWorkoutTypeRow: document.getElementById("runtimeWorkoutTypeRow"),
+runtimeSetRow: document.getElementById("runtimeSetRow"),
+runtimeRepRow: document.getElementById("runtimeRepRow"),
+runtimeRestRow: document.getElementById("runtimeRestRow"),
   retargetAvatarSelect: document.getElementById("retargetAvatarSelect"),
   retargetVideoSelect: document.getElementById("retargetVideoSelect"),
+  runtimeRetargetAvatarSelect: document.getElementById("runtimeRetargetAvatarSelect"),
+runtimeRetargetGymSelect: document.getElementById("runtimeRetargetGymSelect"),
+runtimeRetargetInputSelect: document.getElementById("runtimeRetargetInputSelect"),
+runtimeRetargetWorkoutType: document.getElementById("runtimeRetargetWorkoutType"),
+runtimeRetargetSet: document.getElementById("runtimeRetargetSet"),
+runtimeRetargetRep: document.getElementById("runtimeRetargetRep"),
+runtimeRetargetRest: document.getElementById("runtimeRetargetRest"),
+runtimeRetargetFreeSettings: document.getElementById("runtimeRetargetFreeSettings"),
 };
 
 const ctx = dom.canvas.getContext("2d", { willReadFrequently: true });
@@ -312,7 +326,7 @@ const HAND_EDGES = [
   [0, 17],
 ];
 
-const AVATAR_POS = new THREE.Vector3(0, 0, 0.8);
+let AVATAR_POS = new THREE.Vector3(0, 0.12, 0.8);
 const LOOK_TARGET_OFFSET = new THREE.Vector3(0, 0.9, 0);
 const FRONT_CAM_OFFSET = new THREE.Vector3(0, 0.55, 3.4);
 
@@ -321,10 +335,20 @@ const FRONT_CAM_OFFSET = new THREE.Vector3(0, 0.55, 3.4);
  * ========================= */
 const state = {
   currentMode: null,
-  themeLight: false,
+  themeLight: true,
   stopped: true,
   selectedAvatarId: "default",
   selectedGymId: "gym1",
+
+  ttsEnabled: true,
+lastTtsAt: 0,
+lastTtsText: "",
+
+webcamStream: null,
+poseData: null,
+
+pushupRootYOffset: 0,
+pushupFootGroundY: null,
 
   webcamStream: null,
   poseData: null,
@@ -466,6 +490,109 @@ let renderRafId = 0;
 let lastRenderTime = 0;
 let mediapipeAvatarManager = null;
 let gymImageBg = null;
+let loadingScene, loadingCamera, loadingRenderer, loadingMixer;
+let loadingClock = new THREE.Clock();
+let loadingAvatarInited = false;
+let loadingAvatarAnimating = false;
+
+function initLoadingAvatar() {
+  if (loadingAvatarInited) return;
+
+  const container = document.getElementById("loadingAvatarStage");
+  if (!container) return;
+
+  loadingAvatarInited = true;
+
+  loadingScene = new THREE.Scene();
+
+  loadingCamera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+
+// ✅ 블렌더 Left Orthographic 느낌: 옆면에서 보기
+loadingCamera.position.set(3.2, 0.85, 0);
+loadingCamera.lookAt(0, 0.85, 0);
+
+  loadingRenderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: true,
+  });
+
+  loadingRenderer.setSize(220, 260);
+  loadingRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+  container.innerHTML = "";
+  container.appendChild(loadingRenderer.domElement);
+
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 2.4);
+loadingScene.add(hemiLight);
+
+const sideLight = new THREE.DirectionalLight(0xffffff, 2.8);
+sideLight.position.set(3, 3, 3);
+loadingScene.add(sideLight);
+
+const frontLight = new THREE.DirectionalLight(0xffffff, 2.0);
+frontLight.position.set(3, 1.5, 0);
+loadingScene.add(frontLight);
+
+  const loader = new GLTFLoader();
+
+  loader.load("/models/Untitled_running.glb", (gltf) => {
+  const model = gltf.scene;
+
+  // ✅ 너무 작으니까 확대
+  model.scale.set(1.6, 1.6, 1.6);
+
+  // ✅ 화면 중앙보다 살짝 위로
+  model.position.set(0, -0.65, 0);
+
+  // ✅ 옆모습 방향이 반대면 이 값만 바꿔
+  model.rotation.y = 0;
+  // model.rotation.y = Math.PI; // 반대로 보이면 이걸로 교체
+
+  loadingScene.add(model);
+
+  if (gltf.animations.length > 0) {
+    loadingMixer = new THREE.AnimationMixer(model);
+    const action = loadingMixer.clipAction(gltf.animations[0]);
+    action.setLoop(THREE.LoopRepeat, Infinity);
+    action.play();
+  }
+});
+}
+
+function animateLoadingAvatar() {
+  requestAnimationFrame(animateLoadingAvatar);
+
+  if (!loadingRenderer || !loadingScene || !loadingCamera) return;
+
+  const delta = loadingClock.getDelta();
+  if (loadingMixer) loadingMixer.update(delta);
+
+  loadingRenderer.render(loadingScene, loadingCamera);
+}
+
+function showLoadingAvatar() {
+  initLoadingAvatar();
+
+  document.getElementById("loadingAvatarOverlay")?.classList.remove("hidden");
+
+  if (!loadingAvatarAnimating) {
+    loadingAvatarAnimating = true;
+    animateLoadingAvatar();
+  }
+}
+
+function hideLoadingAvatar() {
+  document.getElementById("loadingAvatarOverlay")?.classList.add("hidden");
+}
+window.showLoadingAvatar = showLoadingAvatar;
+window.hideLoadingAvatar = hideLoadingAvatar;
+
+// 🔥 여기 추가
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    initLoadingAvatar();
+  }, 500);
+});
 
 renderer = null;
 scene = null;
@@ -650,18 +777,26 @@ function setLayerOrder(mainEl, pipEl) {
   if (pipEl) pipEl.style.zIndex = "12";
 }
 
-function setTheme() {
-  state.themeLight = !state.themeLight;
+function setTheme(light = state.themeLight) {
+  state.themeLight = light;
+
   dom.body?.classList.toggle("light-mode", state.themeLight);
+
   if (dom.themeToggle) {
     dom.themeToggle.textContent = state.themeLight
-      ? "☀️ LIGHT MODE"
-      : "🌙 DARK MODE";
+      ? "🌙 DARK MODE"
+      : "☀️ LIGHT MODE";
   }
 
   if (scene) {
-    scene.background = new THREE.Color(state.themeLight ? 0xf4f7f6 : 0x0a0a0c);
+    scene.background = new THREE.Color(
+      state.themeLight ? 0xf4f7f6 : 0x0a0a0c
+    );
   }
+}
+
+function toggleTheme() {
+  setTheme(!state.themeLight);
 }
 
 function resizeThreeRenderer() {
@@ -722,7 +857,11 @@ function popCounter() {
 function updateCounterChip(force = false) {
   if (!dom.counterChip) return;
 
-  const nextText = `${state.squatCount}`;
+  const nextText =
+    state.workoutType === "challenge"
+      ? `CHALLENGE · ${state.squatCount}`
+      : `${state.squatCount}`;
+
   const prevText = dom.counterChip.textContent;
 
   if (force || prevText !== nextText) {
@@ -749,6 +888,10 @@ function clearFeedbackToasts() {
     clearTimeout(state.centerAlertTimer);
     state.centerAlertTimer = null;
   }
+
+  window.speechSynthesis?.cancel?.();
+state.lastTtsText = "";
+state.lastTtsAt = 0;
 
   hideCenterAlert();
 }
@@ -786,12 +929,9 @@ function syncPipSettingsUI() {
       state.standardDisplay === "avatarMain"
         ? "비디오 작은창 표시"
         : "아바타 작은창 표시";
-  } else if (state.currentMode === "retarget") {
+} else if (state.currentMode === "retarget") {
   if (isRetargetVideoOnly()) {
-    label =
-      state.retargetDisplay === "avatar"
-        ? "비디오 작은창 표시"
-        : "아바타 작은창 표시";
+    label = "비디오 작은창 표시";
   } else {
     label =
       state.retargetDisplay === "avatar"
@@ -808,6 +948,26 @@ function syncPipSettingsUI() {
 
   const hideAvatarOptions =
   !isAvatarMode || isRetargetVideoOnly();
+
+  const hideWorkoutRowsForStandard = state.currentMode === "standard";
+const isChallenge = state.workoutType === "challenge";
+
+const retargetInputValue = dom.runtimeRetargetInputSelect?.value || "squat";
+const isRetargetFree = retargetInputValue === "free";
+
+dom.runtimeRetargetWorkoutType
+  ?.closest(".pip-settings-row")
+  ?.classList.toggle("hidden", state.currentMode !== "retarget" || !isRetargetFree);
+
+dom.runtimeRetargetFreeSettings?.classList.toggle(
+  "hidden",
+  state.currentMode !== "retarget" || !isRetargetFree || isChallenge
+);
+
+dom.runtimeWorkoutTypeRow?.classList.toggle("hidden", hideWorkoutRowsForStandard);
+dom.runtimeSetRow?.classList.toggle("hidden", hideWorkoutRowsForStandard || isChallenge);
+dom.runtimeRepRow?.classList.toggle("hidden", hideWorkoutRowsForStandard || isChallenge);
+dom.runtimeRestRow?.classList.toggle("hidden", hideWorkoutRowsForStandard || isChallenge);
 
 dom.avatarFistToggleRow?.classList.toggle("hidden", hideAvatarOptions);
 dom.avatarKnifeToggleRow?.classList.toggle("hidden", hideAvatarOptions);
@@ -850,13 +1010,10 @@ function togglePipSettings() {
 
 function updatePipSettingsButtonVisibility() {
   const visible =
-  !isRetargetVideoOnly() &&
-  (
     state.currentMode === "standard" ||
     state.currentMode === "feedback" ||
     state.currentMode === "avatar" ||
-    state.currentMode === "retarget"
-  );
+    state.currentMode === "retarget";
 
   if (dom.pipSettingsBtn) {
     dom.pipSettingsBtn.style.display = visible ? "flex" : "none";
@@ -939,6 +1096,33 @@ function hideCenterAlert() {
   dom.centerAlert.classList.add("hidden");
 }
 
+function speakFeedback(text) {
+  if (!state.ttsEnabled) return;
+  if (!text) return;
+  if (!("speechSynthesis" in window)) return;
+
+  const now = performance.now();
+
+  // 너무 자주 말하는 것 방지
+  if (now - state.lastTtsAt < 1800) return;
+
+  // 같은 문장 반복 방지
+  if (state.lastTtsText === text && now - state.lastTtsAt < 5000) return;
+
+  window.speechSynthesis.cancel();
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "ko-KR";
+  utter.rate = 1.05;
+  utter.pitch = 1.0;
+  utter.volume = 1.0;
+
+  state.lastTtsAt = now;
+  state.lastTtsText = text;
+
+  window.speechSynthesis.speak(utter);
+}
+
 function showCenterAlert({
   level = "warn",
   title = "알림",
@@ -964,6 +1148,8 @@ function showCenterAlert({
 
   dom.centerAlertTitle.textContent = title;
   dom.centerAlertText.textContent = text;
+
+  speakFeedback(text || title);
 
   requestAnimationFrame(() => {
     dom.centerAlert?.classList.add("show");
@@ -1522,11 +1708,8 @@ function resetWorkoutSession() {
 
 function getWorkoutStatusText() {
   if (state.workoutType === "challenge") {
-    if (state.workoutSession.challengeFailed) {
-      return "CHALLENGE FAIL";
-    }
-    return `CHALLENGE · 10초 제한`;
-  }
+  return `CHALLENGE · REP ${state.squatCount}`;
+}
 
   if (state.workoutSession.finished) {
     return "WORKOUT DONE";
@@ -1589,6 +1772,33 @@ function handleWorkoutProgressAfterRep() {
   setStatus(getWorkoutStatusText());
 }
 
+function updateChallengeTimeout() {
+  if (state.workoutType !== "challenge") return;
+  if (state.workoutSession.challengeFailed) return;
+  if (isRetargetVideoOnly()) return;
+
+  const allowedModes = ["standard", "avatar", "feedback", "retarget"];
+  if (!allowedModes.includes(state.currentMode)) return;
+
+  const elapsedMs = performance.now() - state.workoutSession.challengeRepStartAt;
+  const limitMs = state.workoutConfig.challengeRepLimitSec * 1000;
+
+  if (elapsedMs < limitMs) return;
+
+  state.workoutSession.challengeFailed = true;
+  state.workoutSession.finished = true;
+
+  setStatus("CHALLENGE FAILED");
+  setFeedbackText("챌린지 실패");
+
+  showCenterAlert({
+    level: "bad",
+    title: "챌린지 실패",
+    text: `${state.workoutConfig.challengeRepLimitSec}초 안에 동작을 완료하지 못했습니다.`,
+    duration: 2200,
+  });
+}
+
 function updateWorkoutRuntimeStatus() {
     if (isRetargetVideoOnly()) {
     setStatus("VIDEO ONLY");
@@ -1602,30 +1812,21 @@ function updateWorkoutRuntimeStatus() {
 ) return;
 
   if (state.workoutType === "challenge") {
-    const elapsedSec =
-      (performance.now() - state.workoutSession.challengeRepStartAt) / 1000;
+  updateChallengeTimeout();
 
-    if (elapsedSec > state.workoutConfig.challengeRepLimitSec) {
-      state.workoutSession.challengeFailed = true;
-      setStatus("CHALLENGE FAIL");
-      showCenterAlert({
-        level: "bad",
-        title: "챌린지 실패",
-        text: "한 번의 스쿼트를 10초 안에 완료하지 못했습니다.",
-        duration: 1800,
-      });
-
-      state.workoutSession.challengeRepStartAt = performance.now();
-    } else {
-      setStatus(
-        `CHALLENGE · ${Math.ceil(
-          state.workoutConfig.challengeRepLimitSec - elapsedSec
-        )}s`
-      );
-    }
-
+  if (state.workoutSession.challengeFailed) {
+    setStatus("CHALLENGE FAILED");
     return;
   }
+
+  const remainMs =
+    state.workoutConfig.challengeRepLimitSec * 1000 -
+    (performance.now() - state.workoutSession.challengeRepStartAt);
+
+  const remainSec = Math.max(0, Math.ceil(remainMs / 1000));
+  setStatus(`CHALLENGE ${remainSec}s · REP ${state.squatCount}`);
+  return;
+}
 
   if (state.workoutSession.isResting) {
     const remainMs = state.workoutSession.restEndAt - performance.now();
@@ -1658,6 +1859,107 @@ function isRetargetVideoOnly() {
     window.HEALTH_MATE_RETARGET_VIDEO_ONLY === true
   );
 }
+
+function resetRetargetOptionDefaults() {
+  const videoOnly = isRetargetVideoOnly();
+
+  // 공통: 작은창은 기본 ON
+  state.retargetPipVisible = true;
+
+  // 웹캠 모드 기본값: 전부 체크 ON
+  if (!videoOnly) {
+    state.avatarFistGestureEnabled = true;
+    state.avatarKnifeGestureEnabled = true;
+    state.avatarOverlayEnabled = true;
+    state.avatarMarkerEnabled = true;
+    state.cameraRotateEnabled = true;
+  }
+
+  // 영상 모드 기본값: 비디오 작은창 ON, 피드백/제스처 OFF
+  if (videoOnly) {
+    state.avatarFistGestureEnabled = false;
+    state.avatarKnifeGestureEnabled = false;
+    state.avatarOverlayEnabled = false;
+    state.avatarMarkerEnabled = false;
+    state.cameraRotateEnabled = false;
+  }
+
+  if (dom.pipVisibleToggle) {
+    dom.pipVisibleToggle.checked = true;
+  }
+
+  if (dom.avatarFistToggle) dom.avatarFistToggle.checked = state.avatarFistGestureEnabled;
+  if (dom.avatarKnifeToggle) dom.avatarKnifeToggle.checked = state.avatarKnifeGestureEnabled;
+  if (dom.avatarOverlayToggle) dom.avatarOverlayToggle.checked = state.avatarOverlayEnabled;
+  if (dom.avatarMarkerToggle) dom.avatarMarkerToggle.checked = state.avatarMarkerEnabled;
+
+  if (dom.cameraRotateToggle) {
+    dom.cameraRotateToggle.checked = state.cameraRotateEnabled;
+  }
+}
+
+function syncRuntimeStandardSettings() {
+  state.selectedAvatarId = dom.avatarSelect?.value || "default";
+  state.selectedGymId = dom.gymSelect?.value || "gym1";
+
+  if (dom.runtimeAvatarSelect) {
+    dom.runtimeAvatarSelect.value = state.selectedAvatarId;
+  }
+
+  if (dom.runtimeGymSelect) {
+    dom.runtimeGymSelect.value = state.selectedGymId;
+  }
+}
+
+function syncRuntimeRetargetSettings() {
+  const avatarValue = dom.runtimeRetargetAvatarSelect?.value || "model.glb|Mixamo";
+  const [url, type] = avatarValue.split("|");
+
+  state.retargetAvatarUrl = url || "model.glb";
+  state.retargetAvatarType = type || "Mixamo";
+
+  state.selectedGymId = dom.runtimeRetargetGymSelect?.value || "gym1";
+
+  const inputValue = dom.runtimeRetargetInputSelect?.value || "free";
+  state.workoutType = dom.runtimeRetargetWorkoutType?.value || "normal";
+  const setupExerciseSelect = document.getElementById("retargetExerciseSelect");
+if (setupExerciseSelect) {
+  setupExerciseSelect.value = inputValue;
+  setupExerciseSelect.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+  window.HEALTH_MATE_RETARGET_VIDEO_ONLY = inputValue !== "free";
+  window.HEALTH_MATE_RETARGET_HIDE_VIDEO_OVERLAY = inputValue !== "free";
+  window.HEALTH_MATE_RETARGET_DISABLE_FEEDBACK = inputValue !== "free";
+  window.HEALTH_MATE_RETARGET_HIDE_MARKERS = inputValue !== "free";
+
+  const videoMap = {
+  free: "",
+  push_up: "push_up.mp4",
+  jumping_jack: "Jumping_Jack.mp4",
+  high_knee: "High_Knee.mp4",
+  stretching: "stretching.mp4",
+};
+
+state.retargetVideoUrl = videoMap[inputValue] || "";
+
+  const isFree = inputValue === "free";
+const isChallenge = state.workoutType === "challenge";
+
+dom.runtimeRetargetWorkoutType
+  ?.closest(".pip-settings-row")
+  ?.classList.toggle("hidden", !isFree);
+
+dom.runtimeRetargetFreeSettings?.classList.toggle(
+  "hidden",
+  !isFree || isChallenge
+);
+
+  state.workoutConfig.setCount = clamp(Number(dom.runtimeRetargetSet?.value || 3), 1, 20);
+  state.workoutConfig.repsPerSet = clamp(Number(dom.runtimeRetargetRep?.value || 10), 1, 100);
+  state.workoutConfig.restSeconds = clamp(Number(dom.runtimeRetargetRest?.value || 30), 0, 600);
+}
+
 function isCleanVideoUiMode() {
   return (
     state.currentMode === "standard" ||
@@ -1681,16 +1983,13 @@ function updateCleanVideoUi() {
 
   document.body.classList.toggle("clean-video-ui", clean);
 
-  const topbarItems = [
+  [
     dom.saveRecordBtn,
     dom.openRecordsBtn,
     dom.openAnalyticsBtn,
     dom.openRecordingsBtn,
-    dom.studentIdInput,
-    dom.userNameInput,
-  ];
-
-  topbarItems.forEach((el) => {
+    document.getElementById("userInfoPanel"),
+  ].forEach((el) => {
     if (!el) return;
     el.classList.toggle("hidden", clean);
   });
@@ -2060,6 +2359,13 @@ function startRetargetDrawLoop() {
 
     updateWorkoutRuntimeStatus();
 
+    if (isRetargetVideoOnly()) {
+  resizeStageToVideo(dom.video.videoWidth || 640, dom.video.videoHeight || 480);
+  drawWebcamFrame();
+  clearOverlay();
+  return;
+}
+
     resizeStageToVideo(dom.video.videoWidth || 640, dom.video.videoHeight || 480);
 
 drawWebcamFrame();
@@ -2082,9 +2388,12 @@ if (!isRetargetVideoOnly()) {
 }
 
 function applyRetargetDisplayMode() {
+
   if (state.currentMode !== "retarget") return;
 
-    const videoOnly = isRetargetVideoOnly();
+  resetRetargetOptionDefaults();   // ⭐ 여기 추가
+
+  const videoOnly = isRetargetVideoOnly();
 
   if (videoOnly) {
     state.avatarFistGestureEnabled = false;
@@ -2094,8 +2403,19 @@ function applyRetargetDisplayMode() {
     state.cameraRotateEnabled = false;
 
     if (dom.recordAvatarBtn) dom.recordAvatarBtn.classList.add("hidden");
-    if (dom.pipSettingsBtn) dom.pipSettingsBtn.style.display = "none";
-    if (dom.pipSettingsPanel) dom.pipSettingsPanel.classList.add("hidden");
+    if (dom.pipSettingsBtn) dom.pipSettingsBtn.style.display = "flex";
+// 패널은 강제로 숨기지 않음
+// if (dom.pipSettingsPanel) dom.pipSettingsPanel.classList.add("hidden");
+
+document.getElementById("retargetRuntimeSettings")?.classList.remove("hidden");
+
+if (dom.pipSettingsBtn) dom.pipSettingsBtn.style.display = "flex";
+
+if (dom.pipSettingsPanel) {
+  dom.pipSettingsPanel.classList.remove("hidden");
+}
+
+document.getElementById("retargetRuntimeSettings")?.classList.remove("hidden");
 
     if (dom.cameraRotateToggle) {
       dom.cameraRotateToggle.checked = false;
@@ -2103,6 +2423,10 @@ function applyRetargetDisplayMode() {
   }
 
   const avatarMain = state.retargetDisplay === "avatar";
+
+if (videoOnly) {
+  state.retargetDisplay = "avatar";
+}
 
   if (dom.video) dom.video.style.display = "none";
   if (dom.webcamStage) dom.webcamStage.style.display = "none";
@@ -2157,7 +2481,19 @@ if (!videoOnly) {
       setLayerOrder(dom.threeWrap, null);
     }
 
-    dom.modeChip.textContent = "리타게팅 모드 · 아바타 메인";
+    const inputValue =
+  dom.runtimeRetargetInputSelect?.value || "push_up";
+
+const inputName =
+  inputValue === "push_up" ? "푸쉬업" :
+  inputValue === "jumping_jack" ? "점핑잭" :
+  inputValue === "high_knee" ? "하이니" :
+  inputValue === "stretching" ? "스트레칭" :
+  "웹캠";
+
+dom.modeChip.textContent = videoOnly
+  ? `리타게팅 모드 · ${inputName} 입력`
+  : "리타게팅 모드 · 아바타 메인";
     setHelp("MediaPipe 기반 포즈로 아바타를 제어합니다.");
   } else {
     dom.webcamStage.style.display = "block";
@@ -2179,14 +2515,17 @@ if (!videoOnly) {
   resizeThreeRenderer();
   resizeStageToVideo(dom.video.videoWidth || 640, dom.video.videoHeight || 480);
   clearOverlay();
+  updateCleanVideoUi();
 });
 }
 
 async function startRetargetMode() {
   await destroyCurrentMode();
 
-  syncWorkoutConfigFromInputs();
-  resetWorkoutSession();
+  syncRuntimeRetargetSettings();
+
+  state.workoutType = "normal";
+resetWorkoutSession();
 
   state.currentMode = "retarget";
   updateCleanVideoUi();
@@ -2263,47 +2602,6 @@ if (state.retargetVideoUrl) {
   await startWebcam();
 }
 
-async function startRetargetVideo() {
-  stopWebcam();
-
-  if (!dom.video) return;
-
-  dom.video.pause?.();
-  dom.video.srcObject = null;
-  dom.video.src = `/${state.retargetVideoUrl}`;
-  dom.video.muted = true;
-  dom.video.loop = true;
-  dom.video.playsInline = true;
-  dom.video.autoplay = true;
-
-  await new Promise((resolve, reject) => {
-    const onReady = () => {
-      cleanup();
-      resolve();
-    };
-
-    const onError = () => {
-      cleanup();
-      reject(new Error(`retarget video load failed: ${state.retargetVideoUrl}`));
-    };
-
-    const cleanup = () => {
-      dom.video.removeEventListener("loadedmetadata", onReady);
-      dom.video.removeEventListener("canplay", onReady);
-      dom.video.removeEventListener("error", onError);
-    };
-
-    dom.video.addEventListener("loadedmetadata", onReady, { once: true });
-    dom.video.addEventListener("canplay", onReady, { once: true });
-    dom.video.addEventListener("error", onError, { once: true });
-
-    dom.video.load();
-  });
-
-  resizeStageToVideo(dom.video.videoWidth || 640, dom.video.videoHeight || 480);
-  await safePlay(dom.video);
-}
-
   initThree();
 
   if (controls) {
@@ -2315,9 +2613,17 @@ async function startRetargetVideo() {
     controls.update();
   }
 
+  showLoadingAvatar();
+
+try {
   const loader = new GLTFLoader();
   await loadGym(loader);
   await loadAnimatedAvatar(loader);
+} finally {
+  setTimeout(() => {
+    hideLoadingAvatar();
+  }, 800);
+}
 
   updatePipSettingsButtonVisibility();
   hidePipSettings();
@@ -2336,6 +2642,108 @@ state.handTimer = setInterval(() => {
   animateThree();
   setStatus("MEDIAPIPE READY");
 }
+
+window.changeRetargetInput = async function (input) {
+  if (input === "push_up") {
+  state.retargetVideoUrl = "push_up.mp4";
+  state.retargetDisplay = "avatar";
+
+  window.HEALTH_MATE_RETARGET_VIDEO_ONLY = true;
+  window.HEALTH_MATE_RETARGET_HIDE_VIDEO_OVERLAY = true;
+  window.HEALTH_MATE_RETARGET_DISABLE_FEEDBACK = true;
+  window.HEALTH_MATE_RETARGET_HIDE_MARKERS = true;
+
+  stopWebcam();
+  await startRetargetVideo();
+  return;
+}
+
+  if (input === "stretching") {
+    state.retargetVideoUrl = "stretching.mp4";
+    state.retargetDisplay = "avatar";
+
+    window.HEALTH_MATE_RETARGET_VIDEO_ONLY = true;
+    window.HEALTH_MATE_RETARGET_HIDE_VIDEO_OVERLAY = true;
+    window.HEALTH_MATE_RETARGET_DISABLE_FEEDBACK = true;
+    window.HEALTH_MATE_RETARGET_HIDE_MARKERS = true;
+
+    stopWebcam();
+    await startRetargetVideo();
+    return;
+  }
+
+  if (input === "free") {
+    state.retargetVideoUrl = "";
+    state.retargetDisplay = "avatar";
+
+    window.HEALTH_MATE_RETARGET_VIDEO_ONLY = false;
+    window.HEALTH_MATE_RETARGET_HIDE_VIDEO_OVERLAY = false;
+    window.HEALTH_MATE_RETARGET_DISABLE_FEEDBACK = false;
+    window.HEALTH_MATE_RETARGET_HIDE_MARKERS = false;
+
+    if (dom.video) {
+      dom.video.pause?.();
+      dom.video.removeAttribute("src");
+      dom.video.srcObject = null;
+    }
+
+    if (state.currentMode === "retarget") {
+  if (dom.pipSettingsBtn) dom.pipSettingsBtn.style.display = "flex";
+  document.getElementById("retargetRuntimeSettings")?.classList.remove("hidden");
+}
+
+    await startWebcam();
+    return;
+    updateCleanVideoUi();
+  }
+};
+
+async function startRetargetVideo(videoUrl = state.retargetVideoUrl) {
+  stopWebcam();
+
+  if (!dom.video) return;
+
+  state.retargetVideoUrl = videoUrl || state.retargetVideoUrl;
+
+  dom.video.pause?.();
+  dom.video.srcObject = null;
+  dom.video.removeAttribute("src");
+  dom.video.load();
+
+  dom.video.src = `/${state.retargetVideoUrl}`;
+  dom.video.muted = true;
+  dom.video.loop = true;
+  dom.video.playsInline = true;
+  dom.video.autoplay = true;
+
+  await new Promise((resolve, reject) => {
+    const cleanup = () => {
+      dom.video.removeEventListener("canplay", onReady);
+      dom.video.removeEventListener("loadeddata", onReady);
+      dom.video.removeEventListener("error", onError);
+    };
+
+    const onReady = () => {
+      cleanup();
+      resolve();
+    };
+
+    const onError = () => {
+      cleanup();
+      reject(new Error(`retarget video load failed: ${state.retargetVideoUrl}`));
+    };
+
+    dom.video.addEventListener("canplay", onReady, { once: true });
+    dom.video.addEventListener("loadeddata", onReady, { once: true });
+    dom.video.addEventListener("error", onError, { once: true });
+
+    dom.video.load();
+  });
+
+  resizeStageToVideo(dom.video.videoWidth || 640, dom.video.videoHeight || 480);
+  await safePlay(dom.video);
+}
+
 /* =========================
  * VIDEO / WEBCAM / JSON
  * ========================= */
@@ -2568,6 +2976,123 @@ function mpPoseToKpts(landmarks) {
   ]);
 }
 
+function getRetargetInputValue() {
+  return dom.runtimeRetargetInputSelect?.value || "free";
+}
+
+function getPushupRootYOffset(landmarks) {
+  if (!landmarks) return 0;
+
+  const L_SHOULDER = 11;
+  const R_SHOULDER = 12;
+  const L_HIP = 23;
+  const R_HIP = 24;
+
+  const ls = landmarks[L_SHOULDER];
+  const rs = landmarks[R_SHOULDER];
+  const lh = landmarks[L_HIP];
+  const rh = landmarks[R_HIP];
+
+  if (!ls || !rs || !lh || !rh) return 0;
+
+  const shoulderY = (ls.y + rs.y) * 0.5;
+  const hipY = (lh.y + rh.y) * 0.5;
+
+  // 푸쉬업에서 어깨가 엉덩이보다 아래로 갈수록 값 증가
+  const diff = shoulderY - hipY;
+
+  // 화면 y는 아래로 갈수록 커짐
+  // diff가 커질수록 아바타 전체를 아래로 내림
+  return THREE.MathUtils.clamp(diff * 2.2, 0, 0.55);
+}
+
+function stabilizeUprightRetargetLandmarks(landmarks) {
+  if (!landmarks) return landmarks;
+
+  const input = getRetargetInputValue();
+
+  if (input === "push_up") {
+  const lm = landmarks.map((p) => ({ ...p }));
+
+  const L_HIP = 23;
+  const R_HIP = 24;
+  const L_KNEE = 25;
+  const R_KNEE = 26;
+  const L_ANKLE = 27;
+  const R_ANKLE = 28;
+  const L_HEEL = 29;
+  const R_HEEL = 30;
+  const L_FOOT = 31;
+  const R_FOOT = 32;
+
+  const hipZ = (lm[L_HIP].z + lm[R_HIP].z) * 0.5;
+
+  // 푸쉬업에서는 하체 회전이 꼬이므로 하체 Z축만 골반 쪽으로 안정화
+  for (const i of [L_KNEE, R_KNEE, L_ANKLE, R_ANKLE, L_HEEL, R_HEEL, L_FOOT, R_FOOT]) {
+    if (!lm[i]) continue;
+    lm[i].z = THREE.MathUtils.lerp(lm[i].z, hipZ, 0.95);
+  }
+
+  return lm;
+}
+
+  // 서서 하는 운동만 상체 Z축 흔들림 억제
+  const shouldUpright =
+    input === "high_knee" ||
+    input === "jumping_jack" ||
+    input === "stretching";
+
+  if (!shouldUpright) return landmarks;
+
+  const lm = landmarks.map((p) => ({ ...p }));
+
+  const L_SHOULDER = 11;
+  const R_SHOULDER = 12;
+  const L_HIP = 23;
+  const R_HIP = 24;
+
+  const hipZ = (lm[L_HIP].z + lm[R_HIP].z) * 0.5;
+  const shoulderZ = (lm[L_SHOULDER].z + lm[R_SHOULDER].z) * 0.5;
+
+  // 어깨 z를 골반 z 쪽으로 당겨서 상체가 뒤로 눕는 현상 완화
+  const fixedShoulderZ = THREE.MathUtils.lerp(shoulderZ, hipZ, 0.85);
+
+  lm[L_SHOULDER].z = fixedShoulderZ;
+  lm[R_SHOULDER].z = fixedShoulderZ;
+
+    // 1) 머리/얼굴 Z 흔들림 억제
+  // 코/눈/귀가 앞뒤로 튀면 머리가 달랑거림
+  const HEAD = [0, 1, 2, 3, 4, 7, 8];
+
+  for (const i of HEAD) {
+    if (!lm[i]) continue;
+    lm[i].z = THREE.MathUtils.lerp(lm[i].z, fixedShoulderZ, 0.75);
+  }
+
+  // 2) 팔 Z 흔들림 완화
+  // 어깨-팔꿈치-손목이 앞뒤로 튀는 걸 줄임
+  const ARMS = [13, 14, 15, 16];
+
+  for (const i of ARMS) {
+    if (!lm[i]) continue;
+    lm[i].z = THREE.MathUtils.lerp(lm[i].z, fixedShoulderZ, 0.55);
+  }
+
+  // 3) 팔 좌우/상하 떨림도 약간 줄이기
+  // 손목이 너무 흔들리면 팔 와리가리 심해짐
+  const WRISTS = [15, 16];
+
+  for (const i of WRISTS) {
+    if (!lm[i]) continue;
+    const elbow = i === 15 ? lm[13] : lm[14];
+    if (!elbow) continue;
+
+    lm[i].x = THREE.MathUtils.lerp(lm[i].x, elbow.x, 0.18);
+    lm[i].y = THREE.MathUtils.lerp(lm[i].y, elbow.y, 0.18);
+  }
+  return lm;
+}
+
 async function inferPoseFrame() {
   if (
     state.stopped ||
@@ -2589,9 +3114,18 @@ async function inferPoseFrame() {
   result?.landmarks?.[0] &&
   avatarScene
 ) {
-  mediapipeAvatarManager.update({
-    poseLandmarks: result.landmarks[0],
-  });
+  const correctedLandmarks =
+  stabilizeUprightRetargetLandmarks(result.landmarks[0]);
+
+  if (getRetargetInputValue() === "push_up") {
+  state.pushupRootYOffset = getPushupRootYOffset(result.landmarks[0]);
+} else {
+  state.pushupRootYOffset = 0;
+}
+
+mediapipeAvatarManager.update({
+  poseLandmarks: correctedLandmarks,
+});
 }
 
     if (!lm) {
@@ -2618,9 +3152,6 @@ async function inferPoseFrame() {
   } finally {
     state.poseBusy = false;
   }
-  const kpts = mpPoseToKpts(lm);
-state.lastPoseKpts = kpts;
-updateSmoothPose(kpts);
 }
 
 /* =========================
@@ -3970,17 +4501,23 @@ async function loadAnimatedAvatar(loader) {
   );
 
   mediapipeAvatarManager.setUseHand?.(false);
-  mediapipeAvatarManager.setSlerpRatio?.(0.35);
+  mediapipeAvatarManager.setSlerpRatio?.(0.75);
   mediapipeAvatarManager.initKalmanFilter?.();
-  mediapipeAvatarManager.setUseKalmanFilter?.(true);
+  mediapipeAvatarManager.setUseKalmanFilter?.(false);
 }
 
           const clips = gltf.animations || [];
           if (clips.length > 0) {
             mixer = new THREE.AnimationMixer(avatarScene);
-            squatClip = clips[0];
-            squatAction = mixer.clipAction(squatClip);
-            squatAction.enabled = true;
+
+squatClip = gltf.animations[0];
+squatAction = mixer.clipAction(squatClip);
+
+// ✅ 이거 없으면 한번만 재생됨
+squatAction.setLoop(THREE.LoopRepeat, Infinity);
+squatAction.clampWhenFinished = false;
+
+squatAction.play();
             if (state.currentMode === "standard") {
   // ✅ 정석 모드 → 무한 반복
   squatAction.setLoop(THREE.LoopRepeat, Infinity);
@@ -4041,6 +4578,27 @@ function updateProgressControlledAnimation() {
   avatarScene?.updateMatrixWorld(true);
 }
 
+function updateStandardAnimationByVideo() {
+  if (!mixer || !squatClip || !squatAction || !dom.guideVideo) return;
+  if (dom.guideVideo.readyState < 2) return;
+
+  const video = dom.guideVideo;
+
+  const videoProgress = clamp01(
+    (video.currentTime + JSON_TIME_OFFSET_SEC) / video.duration
+  );
+
+  const clipStart = squatClip.duration * CLIP_START_NORM;
+  const clipEnd = squatClip.duration * STANDARD_CLIP_END_NORM;
+  const usableDuration = clipEnd - clipStart;
+
+  squatAction.enabled = true;
+  squatAction.paused = true;
+  squatAction.time = clipStart + usableDuration * videoProgress;
+
+  mixer.update(0);
+}
+
 function applyHandCameraControl() {
   if (!camera || !avatarScene) return;
 
@@ -4095,12 +4653,28 @@ function animateThree(now = 0) {
     controls.update();
   }
 
-  if (state.currentMode !== "retarget") {
+  if (
+  state.currentMode === "feedback" ||
+  state.currentMode === "avatar" ||
+  state.currentMode === "standard"
+) {
   updateProgressControlledAnimation();
 }
 
 if (state.currentMode === "retarget" && avatarScene) {
   avatarScene.position.copy(AVATAR_POS);
+
+  const inputValue =
+    dom.runtimeRetargetInputSelect?.value || "free";
+
+  if (inputValue === "push_up") {
+    avatarScene.position.y -= 0.15;
+  }
+
+  // 하이니/점핑잭은 상체가 뒤로 꺾이는 걸 줄임
+  if (inputValue === "high_knee" || inputValue === "jumping_jack") {
+    avatarScene.rotation.x = 0;
+  }
 }
   updateAvatarFeedbackMarkers();
 
@@ -4116,8 +4690,7 @@ if (state.currentMode === "retarget" && avatarScene) {
  * DISPLAY APPLY
  * ========================= */
 function applyStandardDisplayMode() {
-  // ✅ 정석 모드에서는 자동 회전 UI 숨김
-dom.cameraRotateToggle?.closest("label")?.classList.add("hidden");
+  dom.cameraRotateToggle?.closest("label")?.classList.add("hidden");
   if (state.currentMode !== "standard") return;
 
   const showAvatarMain = state.standardDisplay === "avatarMain";
@@ -4133,34 +4706,28 @@ dom.cameraRotateToggle?.closest("label")?.classList.add("hidden");
   showCounter(false);
   clearGuideOverlay();
 
+  // ✅ PIP 완전 제거: 항상 메인 하나만 표시
+  state.standardPipVisible = false;
+
   if (showAvatarMain) {
     dom.threeWrap.style.display = "block";
     dom.threeWrap.classList.add("stage-main");
-
-    if (state.standardPipVisible) {
-      dom.guideStage.style.display = "block";
-      dom.guideStage.classList.add("stage-pip");
-      setLayerOrder(dom.threeWrap, dom.guideStage);
-    } else {
-      setLayerOrder(dom.threeWrap, null);
-    }
+    setLayerOrder(dom.threeWrap, null);
 
     dom.modeChip.textContent = "정석 모드 · 아바타 메인";
-    setHelp("작은 비디오 더블클릭 시 비디오/아바타 위치 전환");
+    setHelp("전환 버튼을 누르면 영상 메인으로 변경");
   } else {
     dom.guideStage.style.display = "block";
     dom.guideStage.classList.add("stage-main");
+    setLayerOrder(dom.guideStage, null);
 
-    if (state.standardPipVisible) {
-      dom.threeWrap.style.display = "block";
-      dom.threeWrap.classList.add("stage-pip");
-      setLayerOrder(dom.guideStage, dom.threeWrap);
-    } else {
-      setLayerOrder(dom.guideStage, null);
-    }
+    dom.modeChip.textContent = "정석 모드 · 영상 메인";
+    setHelp("전환 버튼을 누르면 아바타 메인으로 변경");
+  }
 
-    dom.modeChip.textContent = "정석 모드 · 비디오 메인";
-    setHelp("작은 아바타 더블클릭 시 비디오/아바타 위치 전환");
+  if (dom.manualToggleBtn) {
+    dom.manualToggleBtn.textContent = showAvatarMain ? "🎬 영상 보기" : "🧍 아바타 보기";
+    dom.manualToggleBtn.style.display = "inline-flex";
   }
 
   syncPipSettingsUI();
@@ -4168,6 +4735,7 @@ dom.cameraRotateToggle?.closest("label")?.classList.add("hidden");
   requestAnimationFrame(() => {
     resizeThreeRenderer();
     resizeGuideOverlay();
+    drawGuideVideoFrameOnly?.();
   });
 }
 
@@ -4430,7 +4998,8 @@ function syncStandardToVideoFrame(now, metadata) {
 
   state.squatProgressRaw = depth;
   state.squatProgressSmooth = depth;
-
+  
+  updateWorkoutRuntimeStatus();
   drawGuideVideoFrameOnly();
 
   if (
@@ -4444,10 +5013,11 @@ function syncStandardToVideoFrame(now, metadata) {
 }
 
 async function startStandardMode() {
+  syncRuntimeStandardSettings();
   await destroyCurrentMode();
 
-  syncWorkoutConfigFromInputs();
-  resetWorkoutSession();
+  state.workoutType = "normal";
+resetWorkoutSession();
 
   clearFeedbackToasts();
   state.feedbackToastCooldowns = {};
@@ -4455,9 +5025,19 @@ async function startStandardMode() {
   state.lastGuideOverlayKey = "";
 
   state.currentMode = "standard";
+  state.squatProgressRaw = 0;
+state.squatProgressSmooth = 0;
+state.squatState = "UP";
+
+if (dom.guideVideo) {
+  dom.guideVideo.pause();
+  dom.guideVideo.currentTime = 0;
+  dom.guideVideo.loop = true;
+}
   updateCleanVideoUi();
   state.stopped = false;
   state.standardDisplay = "avatarMain";
+  state.standardPipVisible = false;
   state.squatCount = 0;
   state.squatProgressSmooth = 0;
   state.squatState = "UP";
@@ -4484,17 +5064,31 @@ async function startStandardMode() {
   state.cameraRotateEnabled = false;
   dom.recordAvatarBtn?.classList.add("hidden");
   await startGuideVideo();
+
+if (dom.guideVideo) {
+  dom.guideVideo.loop = true;
   dom.guideVideo.currentTime = 0;
-  await loadPoseJson();
+  await safePlay(dom.guideVideo);
+}
+
+await loadPoseJson();
 
   initThree();
   if (controls) {
     controls.enabled = true;
   }
 
+  showLoadingAvatar();
+
+try {
   const loader = new GLTFLoader();
   await loadGym(loader);
   await loadAnimatedAvatar(loader);
+} finally {
+  setTimeout(() => {
+    hideLoadingAvatar();
+  }, 800);
+}
 
   updatePipSettingsButtonVisibility();
   hidePipSettings();
@@ -4713,9 +5307,17 @@ async function startAvatarMode() {
   controls.update();
 }
 
+  showLoadingAvatar();
+
+try {
   const loader = new GLTFLoader();
   await loadGym(loader);
   await loadAnimatedAvatar(loader);
+} finally {
+  setTimeout(() => {
+    hideLoadingAvatar();
+  }, 800);
+}
 
   updatePipSettingsButtonVisibility();
   hidePipSettings();
@@ -4864,9 +5466,10 @@ dom.recordAvatarBtn?.classList.add("hidden");
 /* =========================
  * EVENTS
  * ========================= */
-dom.themeToggle?.addEventListener("click", setTheme);
+dom.themeToggle?.addEventListener("click", toggleTheme);
 
 dom.backBtn?.addEventListener("click", async () => {
+  window.resetUiSettingsToDefault?.();
   await destroyCurrentMode();
   state.currentMode = null;
   resetViewVisibility();
@@ -4877,6 +5480,7 @@ dom.backBtn?.addEventListener("click", async () => {
   updatePipSettingsButtonVisibility();
   showModeScreen();
   document.body.classList.remove("clean-video-ui");
+  window.resetUiSettingsToDefault = resetUiSettingsToDefault;
 });
 
 dom.modeCards?.forEach((card) => {
@@ -4902,6 +5506,120 @@ dom.avatarSelect?.addEventListener("change", (e) => {
   updateAvatarPreview();
 });
 
+dom.gymSelect?.addEventListener("change", (e) => {
+  state.selectedGymId = e.target.value;
+  updateGymPreview();
+});
+
+dom.runtimeAvatarSelect?.addEventListener("change", async (e) => {
+  state.selectedAvatarId = e.target.value;
+
+  if (dom.avatarSelect) dom.avatarSelect.value = e.target.value;
+  updateAvatarPreview();
+
+  if (state.currentMode === "standard" || state.currentMode === "avatar") {
+    await loadAnimatedAvatar(new GLTFLoader());
+
+    if (state.currentMode === "standard") {
+      applyStandardDisplayMode();
+    } else {
+      applyAvatarDisplayMode();
+    }
+
+    syncPipSettingsUI();
+  }
+});
+
+dom.runtimeGymSelect?.addEventListener("change", async (e) => {
+  state.selectedGymId = e.target.value;
+
+  if (dom.gymSelect) dom.gymSelect.value = e.target.value;
+  updateGymPreview();
+
+  if (state.currentMode === "standard" || state.currentMode === "avatar") {
+    await loadGym(new GLTFLoader());
+
+    if (state.currentMode === "standard") {
+      applyStandardDisplayMode();
+    } else {
+      applyAvatarDisplayMode();
+    }
+
+    syncPipSettingsUI();
+  }
+});
+
+dom.runtimeRetargetAvatarSelect?.addEventListener("change", async () => {
+  syncRuntimeRetargetSettings();
+
+  if (state.currentMode === "retarget") {
+    await loadAnimatedAvatar(new GLTFLoader());
+    applyRetargetDisplayMode();
+    syncPipSettingsUI();
+  }
+});
+
+dom.runtimeRetargetGymSelect?.addEventListener("change", async () => {
+  syncRuntimeRetargetSettings();
+
+  if (state.currentMode === "retarget") {
+    await loadGym(new GLTFLoader());
+    applyRetargetDisplayMode();
+    syncPipSettingsUI();
+  }
+});
+
+dom.runtimeRetargetInputSelect?.addEventListener("change", async () => {
+  syncRuntimeRetargetSettings();
+
+  if (state.currentMode !== "retarget") return;
+
+  const inputValue = dom.runtimeRetargetInputSelect?.value || "squat";
+
+  state.retargetDisplay = "avatar";
+
+  clearOverlay();
+  clearCanvas();
+  state.smoothPoseKpts = null;
+  state.lastPoseKpts = null;
+  state.lastHandResult = null;
+  state.retargetCocoKpts = null;
+
+  if (inputValue === "free") {
+    window.HEALTH_MATE_RETARGET_VIDEO_ONLY = false;
+    await startWebcam();
+  } else {
+    window.HEALTH_MATE_RETARGET_VIDEO_ONLY = true;
+
+    const videoMap = {
+      squat: "squat2.mp4",
+      stretching: "stretching.mp4",
+    };
+
+    await startRetargetVideo(videoMap[inputValue]);
+  }
+
+  applyRetargetDisplayMode();
+  syncPipSettingsUI();
+  updatePipSettingsButtonVisibility();
+  updateCleanVideoUi();
+});
+
+dom.runtimeRetargetSet?.addEventListener("change", syncRuntimeRetargetSettings);
+dom.runtimeRetargetRep?.addEventListener("change", syncRuntimeRetargetSettings);
+dom.runtimeRetargetRest?.addEventListener("change", syncRuntimeRetargetSettings);
+dom.runtimeRetargetWorkoutType?.addEventListener("change", () => {
+  syncRuntimeRetargetSettings();
+  resetWorkoutSession();
+  updateCounterChip(true);
+  setStatus(getWorkoutStatusText());
+});
+dom.runtimeRetargetWorkoutType?.addEventListener("change", () => {
+  syncRuntimeRetargetSettings();
+  updateCounterChip(true);
+  setStatus(getWorkoutStatusText());
+});
+
 dom.restartBtn?.addEventListener("click", async () => {
   if (state.currentMode === "standard") await startStandardMode();
   else if (state.currentMode === "feedback") await startFeedbackMode();
@@ -4910,7 +5628,9 @@ dom.restartBtn?.addEventListener("click", async () => {
 });
 
 dom.manualToggleBtn?.addEventListener("click", () => {
-  if (state.currentMode === "feedback") {
+  if (state.currentMode === "standard") {
+    toggleStandardDisplay();
+  } else if (state.currentMode === "feedback") {
     state.feedbackDisplay = state.feedbackDisplay === "guide" ? "webcam" : "guide";
     clearFeedbackToasts();
     state.lastGuideOverlayKey = "";
@@ -5027,9 +5747,27 @@ dom.openAnalyticsBtn?.addEventListener("click", () => {
   window.location.href = "http://localhost:3000/analytics.html";
 });
 
+window.setWorkoutType = function (type) {
+  state.workoutType = type || "normal";
+
+  if (dom.workoutTypeSelect) {
+    dom.workoutTypeSelect.value = state.workoutType;
+  }
+
+  updateWorkoutSetupUI();
+  resetWorkoutSession();
+  syncPipSettingsUI();
+  updateCounterChip(true);
+  setStatus(getWorkoutStatusText());
+};
+
 dom.workoutTypeSelect?.addEventListener("change", () => {
   syncWorkoutConfigFromInputs();
   updateWorkoutSetupUI();
+  syncPipSettingsUI();
+  resetWorkoutSession();
+  updateCounterChip(true);
+  setStatus(getWorkoutStatusText());
 });
 
 dom.setCountInput?.addEventListener("input", syncWorkoutConfigFromInputs);
@@ -5085,6 +5823,8 @@ dom.webcamStage?.addEventListener("dblclick", () => {
   state.retargetDisplay =
     state.retargetDisplay === "avatar" ? "webcam" : "avatar";
 
+    dom.runtimeRetargetWorkoutType?.addEventListener("change", syncRuntimeRetargetSettings);
+
   applyRetargetDisplayMode();
 });
 /* =========================
@@ -5094,6 +5834,14 @@ showModeScreen();
 resetViewVisibility();
 setStatus("READY");
 setHelp("설정 대기 중");
+showModeScreen();
+resetViewVisibility();
+setStatus("READY");
+initLoadingAvatar();
+animateLoadingAvatar();
+setHelp("설정 대기 중");
+
+setTheme(true); // 👈 여기 넣어
 if (dom.gestureChip) dom.gestureChip.textContent = "GESTURE: -";
 if (dom.manualToggleBtn) dom.manualToggleBtn.style.display = "none";
 if (dom.studentIdInput) dom.studentIdInput.value = state.studentId;

@@ -23,17 +23,21 @@
     }
 
     body.light-mode {
-      --bg-color: #eef3f7;
-      --bg-elev: rgba(255, 255, 255, 0.92);
-      --bg-soft: rgba(17, 24, 39, 0.04);
-      --text-color: #111827;
-      --muted: #5b6470;
-      --line: rgba(17, 24, 39, 0.08);
-      --line-strong: rgba(17, 24, 39, 0.14);
-      --neon-cyan: #00c7e6;
-      --shadow-lg: 0 18px 34px rgba(17, 24, 39, 0.12);
-      --shadow-md: 0 10px 24px rgba(17, 24, 39, 0.10);
-    }
+  --bg-color: #e5ebf1;
+  --bg-elev: rgba(246, 249, 252, 0.94);
+  --bg-soft: rgba(15, 23, 42, 0.045);
+
+  --text-color: #172033;
+  --muted: #64748b;
+
+  --line: rgba(15, 23, 42, 0.08);
+  --line-strong: rgba(15, 23, 42, 0.14);
+
+  --neon-cyan: #00acc1;
+
+  --shadow-lg: 0 18px 34px rgba(15, 23, 42, 0.10);
+  --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
 
     * { box-sizing: border-box; }
 
@@ -79,22 +83,30 @@
       z-index: 10;
     }
 
-    .theme-btn {
-      position: fixed;
-      top: 18px;
-      right: 18px;
-      border: 1px solid var(--line);
-      background: var(--bg-elev);
-      color: var(--text-color);
-      border-radius: 16px;
-      padding: 12px 18px;
-      cursor: pointer;
-      font-size: 15px;
-      font-weight: 800;
-      z-index: 100;
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow-md);
-    }
+.theme-btn {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid rgba(255,255,255,0.25);
+
+  border-radius: 16px;
+  padding: 12px 18px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 800;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-md);
+}
+
+body.light-mode .theme-btn {
+  background: rgba(10, 12, 18, 0.88);
+  color: #ffffff;
+  border: 1px solid rgba(17, 24, 39, 0.18);
+}
 
     .home-frame {
       width: min(1180px, calc(100vw - 52px));
@@ -271,6 +283,10 @@
       justify-content: center;
     }
 
+body.light-mode .quick-btn {
+  background: rgba(15, 23, 42, 0.035);
+}
+
     .quick-icon {
       font-size: 20px;
       margin-bottom: 8px;
@@ -371,13 +387,44 @@
     }
 
     .setup-body {
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
-      display: grid;
-      grid-template-columns: 270px minmax(0, 1fr);
-      gap: 18px;
-    }
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  gap: 18px;
+}
+
+/* 🔥 여기부터 추가 */
+#setupPage:has(#setup-avatar:not(.hidden)) #setupBody,
+#setupPage:has(#setup-retarget:not(.hidden)) #setupBody {
+  grid-template-columns: 1fr 340px;
+}
+
+#setupPage:has(#setup-avatar:not(.hidden)) #previewColumn,
+#setupPage:has(#setup-retarget:not(.hidden)) #previewColumn {
+  order: 1;
+}
+
+#setupPage:has(#setup-avatar:not(.hidden)) #setup-avatar,
+#setupPage:has(#setup-retarget:not(.hidden)) #setup-retarget {
+  order: 2;
+}
+
+#setupPage:has(#setup-avatar:not(.hidden)) .preview-box,
+#setupPage:has(#setup-retarget:not(.hidden)) .preview-box {
+  height: 100%;
+  justify-content: center;
+  background:
+    radial-gradient(circle at center, rgba(31, 228, 255, 0.16), transparent 40%),
+    #05070b;
+}
+
+#setupPage:has(#setup-avatar:not(.hidden)) .preview-box img,
+#setupPage:has(#setup-retarget:not(.hidden)) .preview-box img {
+  height: 390px;
+  background: transparent;
+}
 
     .setup-body.no-preview {
       grid-template-columns: 1fr;
@@ -1269,9 +1316,168 @@ body.clean-video-ui .app-topbar {
 body.clean-video-ui .topbar-left {
   gap: 0;
 }
+
+.studio-setup {
+  position: relative;
+  overflow: hidden;
+  min-height: 520px;
+  background:
+    radial-gradient(circle at center, rgba(31, 228, 255, 0.12), transparent 38%),
+    #05070b;
+}
+
+.studio-setup::before {
+  content: "HEALTH MATE";
+  position: absolute;
+  top: 28px;
+  left: 34px;
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 18px rgba(31, 228, 255, 0.5);
+  z-index: 1;
+}
+
+.studio-setup .setup-title-line,
+.studio-setup .setup-note {
+  display: none;
+}
+
+.studio-setup .setup-grid-2,
+.studio-setup .setup-row,
+.studio-setup .setup-grid-3,
+.studio-setup .challenge-info,
+.studio-setup .guide-card {
+  position: relative;
+  z-index: 2;
+  width: 280px;
+  margin-left: auto;
+  background: rgba(10, 12, 18, 0.72);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 14px;
+  backdrop-filter: blur(12px);
+}
+
+.studio-setup .setup-grid-2,
+.studio-setup .setup-grid-3 {
+  display: flex;
+  flex-direction: column;
+}
+
+.studio-setup .enter-row {
+  position: relative;
+  z-index: 2;
+  margin-left: auto;
+  width: 280px;
+}
+
+.studio-setup .enter-btn {
+  width: 100%;
+}
+
+.studio-start-btn {
+  width: min(280px, 90%);
+  height: 52px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 16px;
+  background: var(--neon-cyan);
+  color: #000;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(31, 228, 255, 0.22);
+}
+
+#setupPage:not(:has(#setup-avatar:not(.hidden))):not(:has(#setup-retarget:not(.hidden))) #studioStartBtn {
+  display: none;
+}
+
+.pip-settings-group {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.pip-settings-row select,
+.pip-settings-row input {
+  width: 90px;
+  background: #111;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 4px;
+}
+#app-screen {
+  padding-top: 86px;
+}
+
+#themeToggle {
+  z-index: 500;
+}
+
+.app-topbar {
+  position: fixed;
+  top: 14px;
+  left: 16px;
+  right: 190px;
+  z-index: 350;
+}
+
+.main-grid {
+  height: calc(100vh - 102px);
+}
+
+.runtime-preview-panel {
+  position: absolute;
+  left: 28px;
+  top: 76px;
+  width: 240px;
+  height: 500px;
+  z-index: 31;
+
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+
+  pointer-events: none;
+}
+
+.runtime-preview-box {
+  min-height: 0;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(10, 12, 18, 0.72);
+  border-radius: 18px;
+  padding: 10px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.38);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.runtime-preview-box img {
+  width: 100%;
+  height: 190px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.35);
+}
+
+.runtime-preview-box div {
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+  text-align: center;
+}
+
   </style>
 </head>
-<body>
+<body class="light-mode">
   <button id="themeToggle" class="theme-btn">🌙 DARK MODE</button>
 
   <div id="mode-screen" class="screen">
@@ -1386,6 +1592,10 @@ body.clean-video-ui .topbar-left {
               <img id="avatarPreviewImage" src="/images/avatar_default.png" alt="아바타 미리보기" />
               <div id="avatarPreviewName" class="preview-name">기본 RPM</div>
               <div id="avatarPreviewCaption" class="preview-caption">현재 선택된 아바타 미리보기</div>
+            
+              <button id="studioStartBtn" class="studio-start-btn" type="button">
+  START →
+</button>
             </div>
 
             <div id="gymPreviewBox" class="preview-box">
@@ -1455,7 +1665,7 @@ body.clean-video-ui .topbar-left {
             </div>
           </div>
 
-          <div id="setup-avatar" class="setup-panel hidden">
+          <div id="setup-avatar" class="setup-panel studio-setup hidden">
             <div class="setup-title-line">
               <div class="setup-title-text">동작 따라하기 설정</div>
               <span class="selected-chip">Mixamo + 웹캠 + 세트</span>
@@ -1492,13 +1702,13 @@ body.clean-video-ui .topbar-left {
               </div>
             </div>
 
-            <div class="setup-row">
-              <label for="workoutTypeSelect" class="setup-label">운동 타입</label>
-              <select id="workoutTypeSelect" class="setup-select">
-                <option value="normal">노말 모드</option>
-                <option value="challenge">챌린지 모드</option>
-              </select>
-            </div>
+            <div id="runtimeWorkoutTypeRow" class="pip-settings-row">
+  <span>모드</span>
+  <select id="setupAvatarWorkoutType">
+    <option value="normal">노말</option>
+    <option value="challenge">챌린지</option>
+  </select>
+</div>
 
             <div id="normalWorkoutSettings" class="setup-grid-3">
               <div class="setup-field">
@@ -1524,13 +1734,9 @@ body.clean-video-ui .topbar-left {
                 한 번의 스쿼트를 <b>10초 안에</b> 완료해야 하며, 중간 휴식 없이 연속으로 진행합니다.
               </div>
             </div>
-
-            <div class="enter-row">
-              <button class="enter-btn" type="button" data-enter-mode="avatar">입장하기 →</button>
-            </div>
           </div>
 
-          <div id="setup-retarget" class="setup-panel hidden">
+          <div id="setup-retarget" class="setup-panel studio-setup hidden">
   <div class="setup-title-line">
     <div class="setup-title-text">자유 측정 설정</div>
     <span class="selected-chip">리타게팅 아바타 + 입력 선택</span>
@@ -1555,7 +1761,9 @@ body.clean-video-ui .topbar-left {
   <div class="setup-row">
     <label for="retargetExerciseSelect" class="setup-label">입력 선택</label>
     <select id="retargetExerciseSelect" class="setup-select">
-      <option value="squat">스쿼트 영상</option>
+      <option value="push_up">푸쉬업 영상</option>
+      <option value="jumping_jack">점핑잭 영상</option>
+      <option value="high_knee">하이니 영상</option>
       <option value="stretching">스트레칭 영상</option>
       <option value="free">자유 측정 웹캠</option>
     </select>
@@ -1607,10 +1815,6 @@ body.clean-video-ui .topbar-left {
       스쿼트 선택 시 스쿼트 영상, 스트레칭 선택 시 스트레칭 영상, 자유 측정 선택 시 웹캠이 사용됩니다.
     </p>
   </div>
-
-  <div class="enter-row">
-    <button class="enter-btn" type="button" data-enter-mode="retarget">입장하기 →</button>
-  </div>
 </div>
         </div>
       </section>
@@ -1633,6 +1837,36 @@ body.clean-video-ui .topbar-left {
       </div>
     </main>
   </div>
+
+  <!-- 🔥 LOADING AVATAR OVERLAY -->
+<div id="loadingAvatarOverlay" class="hidden"
+  style="
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    display: grid;
+    place-items: center;
+  "
+>
+  <div style="
+    width: 260px;
+    height: 340px;
+    border-radius: 24px;
+    background: rgba(10,12,18,0.9);
+    border: 1px solid rgba(31,228,255,0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  ">
+    <div id="loadingAvatarStage" style="width:200px;height:240px;"></div>
+    <div style="color:#1fe4ff;font-weight:900;margin-top:10px;">
+      LOADING...
+    </div>
+  </div>
+</div>
 
   <div id="app-screen" class="screen hidden">
     <div class="app-topbar">
@@ -1685,8 +1919,136 @@ body.clean-video-ui .topbar-left {
             ⚙
           </button>
 
+          <div id="runtimePreviewPanel" class="runtime-preview-panel hidden">
+  <div class="runtime-preview-box">
+    <img id="runtimePreviewAvatarImg" src="/images/avatar_default.png" alt="아바타 미리보기">
+    <div id="runtimePreviewAvatarName">기본 RPM</div>
+  </div>
+
+  <div class="runtime-preview-box">
+    <img id="runtimePreviewGymImg" src="/images/Untitled_gym.png" alt="헬스장 미리보기">
+    <div id="runtimePreviewGymName">gym1</div>
+  </div>
+</div>
+
           <div id="pipSettingsPanel" class="pip-settings-panel hidden">
-            <div class="pip-settings-title">PIP 설정</div>
+            <div id="avatarRuntimeSettings" class="pip-settings-group hidden">
+  <div class="pip-settings-title">운동 설정</div>
+
+  <div class="pip-settings-row">
+    <span>아바타</span>
+    <select id="runtimeAvatarSelect">
+      <option value="default">기본 RPM</option>
+      <option value="vroid1">VRoid 1</option>
+      <option value="vroid2">VRoid 2</option>
+      <option value="vroid3">VRoid 3</option>
+      <option value="vroid4">VRoid 4</option>
+    </select>
+  </div>
+
+  <div class="pip-settings-row">
+    <span>헬스장</span>
+    <select id="runtimeGymSelect">
+      <option value="gym1">gym1</option>
+      <option value="gym2">gym2</option>
+      <option value="gym3">gym3</option>
+      <option value="gym4">gym4</option>
+      <option value="cyber">Cyber Fitness</option>
+    <option value="ptzone">PT Zone</option>
+    <option value="darkroom">Dark Room</option>
+    <option value="brickgym">Brick Gym</option>
+    </select>
+  </div>
+
+  <div id="runtimeWorkoutTypeRow" class="pip-settings-row">
+    <span>모드</span>
+    <select id="runtimeWorkoutType">
+      <option value="normal">노말</option>
+      <option value="challenge">챌린지</option>
+    </select>
+  </div>
+
+  <div id="runtimeSetRow" class="pip-settings-row">
+  <span>세트</span>
+    <input id="runtimeSet" type="number" value="3" min="1">
+  </div>
+
+  <div class="pip-settings-row">
+    <span>횟수</span>
+    <input id="runtimeRep" type="number" value="10" min="1">
+  </div>
+
+    <div class="pip-settings-row">
+    <span>휴식</span>
+    <input id="runtimeRest" type="number" value="30" min="0">
+  </div>
+</div>
+
+<div id="retargetRuntimeSettings" class="pip-settings-group hidden">
+  <div class="pip-settings-title">자유 측정 설정</div>
+
+  <div class="pip-settings-row">
+    <span>아바타</span>
+    <select id="runtimeRetargetAvatarSelect">
+      <option value="model.glb|Mixamo">Avaturn</option>
+      <option value="boy.glb|Mixamo">Male</option>
+      <option value="girl.glb|Mixamo">Female</option>
+      <option value="main.glb|RPM">Main RPM</option>
+    </select>
+  </div>
+
+  <div class="pip-settings-row">
+    <span>헬스장</span>
+    <select id="runtimeRetargetGymSelect">
+      <option value="gym1">gym1</option>
+      <option value="gym2">gym2</option>
+      <option value="gym3">gym3</option>
+      <option value="gym4">gym4</option>
+      <option value="cyber">Cyber Fitness</option>
+    <option value="ptzone">PT Zone</option>
+    <option value="darkroom">Dark Room</option>
+    <option value="brickgym">Brick Gym</option>
+    </select>
+  </div>
+
+<div id="runtimeRetargetWorkoutTypeRow" class="pip-settings-row">
+  <span>모드</span>
+  <select id="runtimeRetargetWorkoutType">
+    <option value="normal">노말</option>
+    <option value="challenge">챌린지</option>
+  </select>
+</div>
+
+  <div class="pip-settings-row">
+    <span>입력</span>
+    <select id="runtimeRetargetInputSelect">
+      <option value="push_up">푸쉬업 영상</option>
+      <option value="jumping_jack">점핑잭 영상</option>
+      <option value="high_knee">하이니 영상</option>
+      <option value="stretching">스트레칭 영상</option>
+      <option value="free">자유 측정 웹캠</option>
+    </select>
+  </div>
+
+  <div id="runtimeRetargetFreeSettings" class="pip-settings-group hidden">
+    <div id="runtimeSetRow" class="pip-settings-row">
+      <span>세트</span>
+      <input id="runtimeRetargetSet" type="number" value="3" min="1">
+    </div>
+
+    <div id="runtimeRepRow" class="pip-settings-row">
+      <span>횟수</span>
+      <input id="runtimeRetargetRep" type="number" value="10" min="1">
+    </div>
+
+    <div id="runtimeRestRow" class="pip-settings-row">
+      <span>휴식</span>
+      <input id="runtimeRetargetRest" type="number" value="30" min="0">
+    </div>
+  </div>
+</div>
+
+<div class="pip-settings-title">PIP 설정</div>
 
             <div class="pip-settings-row">
               <span id="pipToggleLabel">서브 화면 표시</span>
@@ -1777,17 +2139,17 @@ body.clean-video-ui .topbar-left {
           showGymPreview: false,
         },
         avatar: {
-          label: "동작 따라하기",
-          subtitle: "기존 아바타, 세트 수, 횟수, 휴식 시간을 설정합니다.",
-          showAvatarPreview: true,
-          showGymPreview: true,
-        },
-        retarget: {
-          label: "자유 측정",
-          subtitle: "리타게팅 아바타, 운동 선택, 세트 및 모드를 설정합니다.",
-          showAvatarPreview: true,
-          showGymPreview: true,
-        },
+  label: "동작 따라하기",
+  subtitle: "기존 아바타, 세트 수, 횟수, 휴식 시간을 설정합니다.",
+  showAvatarPreview: true,
+  showGymPreview: false,
+},
+retarget: {
+  label: "자유 측정",
+  subtitle: "리타게팅 아바타, 운동 선택, 세트 및 모드를 설정합니다.",
+  showAvatarPreview: true,
+  showGymPreview: false,
+},
       };
 
       const avatarPreviewMap = {
@@ -1817,6 +2179,68 @@ body.clean-video-ui .topbar-left {
       };
 
       let selectedMode = null;
+
+      function updateRuntimePreviewPanel() {
+  const panel = document.getElementById("runtimePreviewPanel");
+  const avatarImg = document.getElementById("runtimePreviewAvatarImg");
+  const avatarName = document.getElementById("runtimePreviewAvatarName");
+  const gymImg = document.getElementById("runtimePreviewGymImg");
+  const gymName = document.getElementById("runtimePreviewGymName");
+
+  if (!panel || !avatarImg || !avatarName || !gymImg || !gymName) return;
+
+  let avatarData = avatarPreviewMap.default;
+  let gymData = gymPreviewMap.gym1;
+
+  if (selectedMode === "retarget") {
+    const avatarValue =
+      document.getElementById("runtimeRetargetAvatarSelect")?.value ||
+      document.getElementById("retargetAvatarSelect")?.value ||
+      "model.glb|Mixamo";
+
+    avatarData = retargetPreviewMap[avatarValue] || retargetPreviewMap["model.glb|Mixamo"];
+
+    const gymValue =
+      document.getElementById("runtimeRetargetGymSelect")?.value ||
+      document.getElementById("retargetGymSelect")?.value ||
+      "gym1";
+
+    gymData = gymPreviewMap[gymValue] || gymPreviewMap.gym1;
+  } else {
+    const avatarValue =
+      document.getElementById("runtimeAvatarSelect")?.value ||
+      document.getElementById("avatarSelect")?.value ||
+      "default";
+
+    avatarData = avatarPreviewMap[avatarValue] || avatarPreviewMap.default;
+
+    const gymValue =
+      document.getElementById("runtimeGymSelect")?.value ||
+      document.getElementById("gymSelect")?.value ||
+      "gym1";
+
+    gymData = gymPreviewMap[gymValue] || gymPreviewMap.gym1;
+  }
+
+  avatarImg.src = avatarData.img;
+  avatarName.textContent = avatarData.name;
+
+  gymImg.src = gymData.img;
+  gymName.textContent = gymData.name;
+}
+
+document.getElementById("pipSettingsBtn")?.addEventListener("click", () => {
+  setTimeout(() => {
+    const settingsPanel = document.getElementById("pipSettingsPanel");
+    const previewPanel = document.getElementById("runtimePreviewPanel");
+
+    const isOpen = settingsPanel && !settingsPanel.classList.contains("hidden");
+
+    previewPanel?.classList.toggle("hidden", !isOpen);
+
+    if (isOpen) updateRuntimePreviewPanel();
+  }, 0);
+});
 
       function showPage(pageName) {
         Object.entries(pages).forEach(([name, el]) => {
@@ -1933,12 +2357,12 @@ body.clean-video-ui .topbar-left {
 
       function applyModeSettingsBeforeEnter(mode) {
         if (mode === "standard") {
-          const standardVideo = document.getElementById("standardGuideVideoSelect");
-          if (standardVideo) {
-            standardVideo.value = "squat.mp4";
-            standardVideo.dispatchEvent(new Event("change", { bubbles: true }));
-          }
-        }
+  const standardVideo = document.getElementById("standardGuideVideoSelect");
+  if (standardVideo) {
+    standardVideo.value = "squat.mp4";
+    standardVideo.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
 
         if (mode === "avatar") {
           mirrorValue("avatarModeAvatarSelect", "avatarSelect");
@@ -1981,39 +2405,263 @@ window.HEALTH_MATE_RETARGET_HIDE_MARKERS = isVideoInput;
 }
       }
 
-      function enterMode(mode) {
+      async function enterMode(mode) {
+
+  window.showLoadingAvatar?.();
+
+  await new Promise(r => setTimeout(r, 50)); // 렌더링 보장
+
+  selectedMode = mode;
+
   applyModeSettingsBeforeEnter(mode);
+
+  const avatarRuntimePanel = document.getElementById("avatarRuntimeSettings");
+const retargetRuntimePanel = document.getElementById("retargetRuntimeSettings");
+
+const showAvatarRuntimePanel =
+  mode === "avatar" || mode === "standard";
+
+avatarRuntimePanel?.classList.toggle("hidden", !showAvatarRuntimePanel);
+retargetRuntimePanel?.classList.toggle("hidden", mode !== "retarget");
+
+if (mode === "standard" || mode === "avatar") {
+  const avatarValue = document.getElementById("avatarSelect")?.value || "default";
+  const gymValue = document.getElementById("gymSelect")?.value || "gym1";
+
+  const runtimeAvatar = document.getElementById("runtimeAvatarSelect");
+  const runtimeGym = document.getElementById("runtimeGymSelect");
+
+  if (runtimeAvatar) runtimeAvatar.value = avatarValue;
+  if (runtimeGym) runtimeGym.value = gymValue;
+
+  const avatarData = avatarPreviewMap[avatarValue] || avatarPreviewMap.default;
+  const gymData = gymPreviewMap[gymValue] || gymPreviewMap.gym1;
+
+  document.getElementById("runtimePreviewAvatarImg").src = avatarData.img;
+  document.getElementById("runtimePreviewAvatarName").textContent = avatarData.name;
+  document.getElementById("runtimePreviewGymImg").src = gymData.img;
+  document.getElementById("runtimePreviewGymName").textContent = gymData.name;
+}
+
+document.getElementById("runtimePreviewPanel")?.classList.add("hidden");
 
   const topbar = document.querySelector(".app-topbar");
   const exercise = document.getElementById("retargetExerciseSelect")?.value;
 
-  const hideTopbar =
-    mode === "standard" ||
-    (mode === "retarget" && exercise !== "free");
+  const hideRecordButtons =
+  mode === "standard" ||
+  (mode === "retarget" && exercise !== "free");
 
+[
+  "saveRecordBtn",
+  "openRecordsBtn",
+  "openAnalyticsBtn",
+  "openRecordingsBtn",
+  "userInfoPanel",
+].forEach((id) => {
+  document.getElementById(id)?.classList.toggle("hidden", hideRecordButtons);
+});
+
+const hideTopbar = false;
   if (topbar) {
     topbar.style.display = hideTopbar ? "none" : "flex";
   }
 
   const proxy = document.querySelector(`.mode-proxy-container .mode-card[data-mode="${mode}"]`);
   if (proxy) proxy.click();
+    setTimeout(() => {
+    window.hideLoadingAvatar?.();
+  }, 1800);
 }
+
+function resetUiSettingsToDefault() {
+  const defaults = {
+    avatar: "default",
+    gym: "gym1",
+    workoutType: "normal",
+    set: "3",
+    rep: "10",
+    rest: "30",
+    retargetAvatar: "model.glb|Mixamo",
+    retargetInput: "push_up",
+  };
+
+  const setValue = (id, value) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = value;
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+
+  setValue("avatarSelect", defaults.avatar);
+  setValue("avatarModeAvatarSelect", defaults.avatar);
+  setValue("runtimeAvatarSelect", defaults.avatar);
+
+  setValue("gymSelect", defaults.gym);
+  setValue("avatarModeGymSelect", defaults.gym);
+  setValue("retargetGymSelect", defaults.gym);
+  setValue("runtimeGymSelect", defaults.gym);
+  setValue("runtimeRetargetGymSelect", defaults.gym);
+
+  setValue("workoutTypeSelect", defaults.workoutType);
+  setValue("setupAvatarWorkoutType", defaults.workoutType);
+  setValue("retargetWorkoutTypeSelect", defaults.workoutType);
+  setValue("runtimeWorkoutType", defaults.workoutType);
+  setValue("runtimeRetargetWorkoutType", defaults.workoutType);
+
+  setValue("setCountInput", defaults.set);
+  setValue("repCountInput", defaults.rep);
+  setValue("restSecondsInput", defaults.rest);
+  setValue("runtimeSet", defaults.set);
+  setValue("runtimeRep", defaults.rep);
+  setValue("runtimeRest", defaults.rest);
+  setValue("retargetSetCountInput", defaults.set);
+  setValue("retargetRepCountInput", defaults.rep);
+  setValue("retargetRestSecondsInput", defaults.rest);
+  setValue("runtimeRetargetSet", defaults.set);
+  setValue("runtimeRetargetRep", defaults.rep);
+  setValue("runtimeRetargetRest", defaults.rest);
+
+  setValue("retargetAvatarSelect", defaults.retargetAvatar);
+  setValue("runtimeRetargetAvatarSelect", defaults.retargetAvatar);
+  setValue("retargetExerciseSelect", defaults.retargetInput);
+  setValue("runtimeRetargetInputSelect", defaults.retargetInput);
+
+  window.HEALTH_MATE_RETARGET_VIDEO_ONLY = true;
+  window.HEALTH_MATE_RETARGET_HIDE_VIDEO_OVERLAY = true;
+  window.HEALTH_MATE_RETARGET_DISABLE_FEEDBACK = true;
+  window.HEALTH_MATE_RETARGET_HIDE_MARKERS = true;
+
+    document.getElementById("runtimeRetargetFreeSettings")?.classList.add("hidden");
+
+  // ✅ 내부 상태까지 강제 기본값 동기화
+  window.setWorkoutType?.("normal");
+  window.setSetCount?.(3);
+  window.setRepCount?.(10);
+  window.setRestTime?.(30);
+  window.changeRetargetInput?.("push_up");
+}
+window.resetUiSettingsToDefault = resetUiSettingsToDefault;
 
       startWorkoutBtn?.addEventListener("click", () => showPage("mode"));
       modeBackBtn?.addEventListener("click", () => showPage("home"));
-      setupBackBtn?.addEventListener("click", () => showPage("mode"));
+      setupBackBtn?.addEventListener("click", () => {
+   resetUiSettingsToDefault();
+   showPage("mode");
+ });
 
-      document.querySelectorAll("[data-select-mode]").forEach((card) => {
-        card.addEventListener("click", () => {
-          showSetupForMode(card.dataset.selectMode);
-        });
-      });
+      const modeGrid = document.querySelector(".mode-grid");
+
+modeGrid?.addEventListener("click", (e) => {
+  const card = e.target.closest("[data-select-mode]");
+  if (!card) return;
+
+  const mode = card.dataset.selectMode;
+  console.log("MODE CLICK:", mode);
+
+  if (mode === "avatar") {
+    enterMode("avatar");
+    return;
+  }
+
+  if (mode === "retarget") {
+  const retargetExerciseSelect = document.getElementById("retargetExerciseSelect");
+  const runtimeInputSelect = document.getElementById("runtimeRetargetInputSelect");
+
+  if (retargetExerciseSelect) {
+    retargetExerciseSelect.value = "push_up";
+    retargetExerciseSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  if (runtimeInputSelect) {
+    runtimeInputSelect.value = "push_up";
+    runtimeInputSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  enterMode("retarget");
+  return;
+}
+
+  showSetupForMode(mode);
+});
 
       document.querySelectorAll("[data-enter-mode]").forEach((btn) => {
         btn.addEventListener("click", () => {
           enterMode(btn.dataset.enterMode);
         });
       });
+
+      document.getElementById("runtimeAvatarSelect")?.addEventListener("change", async (e) => {
+  window.showLoadingAvatar?.();
+  await new Promise(r => setTimeout(r, 50));
+
+  window.setAvatar?.(e.target.value);
+
+  setTimeout(() => window.hideLoadingAvatar?.(), 600);
+});
+
+document.getElementById("runtimeGymSelect")?.addEventListener("change", async (e) => {
+  window.showLoadingAvatar?.();
+  await new Promise(r => setTimeout(r, 50));
+
+  window.setGym?.(e.target.value);
+
+  setTimeout(() => window.hideLoadingAvatar?.(), 600);
+});
+
+document.getElementById("runtimeWorkoutType")?.addEventListener("change", (e) => {
+  window.setWorkoutType?.(e.target.value);
+});
+
+document.getElementById("runtimeRetargetWorkoutType")?.addEventListener("change", (e) => {
+  window.setWorkoutType?.(e.target.value);
+
+  const isChallenge = e.target.value === "challenge";
+  document.getElementById("runtimeRetargetFreeSettings")
+    ?.classList.toggle("hidden", isChallenge);
+});
+
+document.getElementById("runtimeSet")?.addEventListener("change", (e) => {
+  window.setSetCount?.(Number(e.target.value));
+});
+
+document.getElementById("runtimeRep")?.addEventListener("change", (e) => {
+  window.setRepCount?.(Number(e.target.value));
+});
+
+document.getElementById("runtimeRest")?.addEventListener("change", (e) => {
+  window.setRestTime?.(Number(e.target.value));
+});
+
+document.getElementById("runtimeRetargetInputSelect")?.addEventListener("change", (e) => {
+  const input = e.target.value;
+  const isFree = input === "free";
+
+  document.getElementById("runtimeRetargetFreeSettings")
+    ?.classList.toggle("hidden", !isFree);
+
+  const setupSelect = document.getElementById("retargetExerciseSelect");
+  if (setupSelect) {
+    setupSelect.value = input;
+    setupSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  window.changeRetargetInput?.(input);
+});
+
+      document.getElementById("studioStartBtn")?.addEventListener("click", () => {
+  if (selectedMode === "avatar") {
+    enterMode("avatar");
+  }
+
+  const isRetargetRuntime =
+  selectedMode === "retarget" ||
+  !document.getElementById("retargetRuntimeSettings")?.classList.contains("hidden");
+
+if (isRetargetRuntime) {
+    enterMode("retarget");
+  }
+});
 
       document.getElementById("avatarSelect")?.addEventListener("change", (e) => {
         if (selectedMode === "standard") syncAvatarPreviewFromSelect(e.target);
@@ -2069,6 +2717,30 @@ window.HEALTH_MATE_RETARGET_HIDE_MARKERS = isVideoInput;
 
       bridgeClick("modeRecordsBtn", "openRecordsBtn");
       bridgeClick("modeAnalyticsBtn", "openAnalyticsBtn");
+
+      document.getElementById("pipSettingsBtn")?.addEventListener("click", () => {
+  setTimeout(() => {
+    const settingsPanel = document.getElementById("pipSettingsPanel");
+    const previewPanel = document.getElementById("runtimePreviewPanel");
+
+    const isOpen = settingsPanel && !settingsPanel.classList.contains("hidden");
+
+    previewPanel?.classList.toggle("hidden", !isOpen);
+
+    if (isOpen) updateRuntimePreviewPanel();
+  }, 0);
+});
+
+[
+  "runtimeAvatarSelect",
+  "runtimeGymSelect",
+  "runtimeRetargetAvatarSelect",
+  "runtimeRetargetGymSelect",
+].forEach((id) => {
+  document.getElementById(id)?.addEventListener("change", () => {
+    updateRuntimePreviewPanel();
+  });
+});
 
       showPage("home");
     })();
